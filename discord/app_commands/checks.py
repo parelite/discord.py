@@ -38,7 +38,9 @@ from typing import (
 
 import time
 
-from .commands import check
+from discord.ext import commands
+
+from .commands import Command, check
 from .errors import (
     NoPrivateMessage,
     MissingRole,
@@ -275,9 +277,11 @@ def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
             raise NoPrivateMessage()
 
         if any(
-            interaction.user.get_role(item) is not None
-            if isinstance(item, int)
-            else utils_get(interaction.user.roles, name=item) is not None
+            (
+                interaction.user.get_role(item) is not None
+                if isinstance(item, int)
+                else utils_get(interaction.user.roles, name=item) is not None
+            )
             for item in items
         ):
             return True
@@ -331,6 +335,19 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
     def predicate(interaction: Interaction) -> bool:
         permissions = interaction.permissions
 
+        if isinstance(interaction.command, Command):
+            interaction.command.permissions.append(
+                *[perm for perm, value in perms.items() if getattr(permissions, perm) != value]
+            )
+
+        # Will cause exception if interaction.client is not commands.AutoShardedBot or commands.Bot - Works on the assumption that the user uses either of them.
+        assert isinstance(
+            interaction.client, (commands.AutoShardedBot, commands.Bot)
+        ), "interaction.client must be an instance of commands.AutoShardedBot or commands.Bot"
+
+        if interaction.client.owner_ids is not None and interaction.user.id in interaction.client.owner_ids:
+            return True
+
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
         if not missing:
@@ -358,6 +375,11 @@ def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
     def predicate(interaction: Interaction) -> bool:
         permissions = interaction.app_permissions
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
+
+        if isinstance(interaction.command, Command):
+            interaction.command.bot_permissions.append(
+                *[perm for perm, value in perms.items() if getattr(permissions, perm) != value]
+            )
 
         if not missing:
             return True

@@ -705,6 +705,52 @@ class ColourConverter(Converter[discord.Colour]):
 
 ColorConverter = ColourConverter
 
+class RolesConverter(IDConverter[List[discord.Role]]):
+    """Converts to a :class:`~Union[discord.Role, List[discord.Role]]`.
+    
+    All lookups are via the local guild. If in a DM context, the converter raises
+    :exc:`.NoPrivateMessage` exception.
+
+    The lookup strategy is as follows (in order):
+
+    1. Lookup by ID.
+    2. Lookup by mention.
+    3. Lookup by name
+
+    .. versionchanged:: 1.5
+         Raise :exc:`.RoleNotFound` instead of generic :exc:`.BadArgument`
+    """
+
+    async def convert(self, ctx: Context[BotT], argument: str) -> Union[List[discord.Role], discord.Role]:
+        guild = ctx.guild
+        if not guild:
+            raise NoPrivateMessage()
+        
+        if len(argument.split(',')) > 1:
+            results: list[discord.Role] = []
+            for arg in argument.split(','):
+                role = await self.convert(ctx, arg.strip())
+                
+                assert isinstance(role, discord.Role), "Role must be a discord.Role instance."
+                results.append(role)
+            
+            if not results:
+                raise RoleNotFound(argument)
+            
+            if len(results) == 1:
+                return results[0]
+            
+            return results
+
+        match = self._get_id_match(argument) or re.match(r'<@&([0-9]{15,20})>$', argument)
+        if match:
+            result = guild.get_role(int(match.group(1)))
+        else:
+            await guild.fetch_roles()
+            result = next((role for role in sorted(guild.roles, key=lambda role: role.position, reverse=True) if argument.lower() in role.name.lower()), None)
+
+        if result is None: raise RoleNotFound(argument)
+        return result
 
 class RoleConverter(IDConverter[discord.Role]):
     """Converts to a :class:`~discord.Role`.

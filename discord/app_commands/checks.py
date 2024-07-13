@@ -38,9 +38,8 @@ from typing import (
 
 import time
 
-from discord.ext import commands
+from .commands import check
 
-from .commands import Command, check
 from .errors import (
     NoPrivateMessage,
     MissingRole,
@@ -59,6 +58,7 @@ T = TypeVar('T')
 if TYPE_CHECKING:
     from typing_extensions import Self
     from ..interactions import Interaction
+    from ..ext.commands import AutoShardedBot, Bot, Command
 
     CooldownFunction = Union[
         Callable[[Interaction[Any]], Coroutine[Any, Any, T]],
@@ -336,13 +336,13 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
         permissions = interaction.permissions
 
         if isinstance(interaction.command, Command):
-            interaction.command.permissions.append(
+            interaction.command.user_permissions.append(
                 *[perm for perm, value in perms.items() if getattr(permissions, perm) != value]
             )
 
         # Will cause exception if interaction.client is not commands.AutoShardedBot or commands.Bot - Works on the assumption that the user uses either of them.
         assert isinstance(
-            interaction.client, (commands.AutoShardedBot, commands.Bot)
+            interaction.client, (AutoShardedBot, Bot)
         ), "interaction.client must be an instance of commands.AutoShardedBot or commands.Bot"
 
         if interaction.client.owner_ids is not None and interaction.user.id in interaction.client.owner_ids:

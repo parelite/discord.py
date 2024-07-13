@@ -459,11 +459,6 @@ def mark_overrideable(func: F) -> F:
     func.__discord_app_commands_base_function__ = None
     return func
 
-@dataclass
-class CommandArgument:
-    name: str
-    optional: bool
-
 class Parameter:
     """A class that contains the parameter information of a :class:`Command` callback.
 
@@ -685,9 +680,6 @@ class Command(Generic[GroupT, P, T]):
         self.on_error: Optional[Error[GroupT]] = None
         self.module: Optional[str] = callback.__module__
         
-        self.permissions: List[str] = []
-        self.bot_permissions: List[str] = []
-        
         # Unwrap __self__ for bound methods
         try:
             self.binding = callback.__self__
@@ -736,32 +728,6 @@ class Command(Generic[GroupT, P, T]):
     def callback(self) -> CommandCallback[GroupT, P, T]:
         """:ref:`coroutine <coroutine>`: The coroutine that is executed when the command is called."""
         return self._callback
-
-    @property
-    def arguments(self: Command) -> List[CommandArgument]:
-        # Uses get_origin to check if the annotation is a Literal
-        # If it is, we need to use get_args to return the literal values
-        # Otherwise, we just return the parameter name
-        def get_parameter_name(name: str, annotation: Optional[type]) -> str:
-            if annotation is not None and get_origin(annotation) is Literal:
-                literal_values = get_args(annotation)
-                # Literally only here for easy formatting later on for help commands
-                if len(literal_values) > 1:
-                    return ', '.join([f"'{value}'" for value in literal_values[:-1]]) + f" or '{literal_values[-1]}'"
-                else:
-                    return f'`{literal_values[0]}`' # type: ignore
-            return name.replace('_', ' ')
-        
-        # Skip the first two parameters (self and Interaction, or Context)
-        # and return the rest as CommandArguments
-        # If parameter annotation is Union with type(None), it's optional
-        return [
-            CommandArgument(
-                name=get_parameter_name(name, param.annotation),
-                optional=(get_origin(param.annotation) is Union and type(None) in get_args(param.annotation))
-            )
-            for name, param in list(inspect.signature(self.callback).parameters.items())[2:]
-        ]
     
     def _copy_with(
         self,

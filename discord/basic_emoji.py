@@ -20,9 +20,7 @@ class BasicEmoji:
         return self.name
     
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, BasicEmoji):
-            return self.name == other.name
-        return False
+        return self.name == other.name if isinstance(other, BasicEmoji) else False
     
     def __ne__(self, other: object) -> bool:
         return not self.__eq__(other)

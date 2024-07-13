@@ -729,7 +729,8 @@ class RoleConverter(IDConverter[discord.Role]):
         
         if len(argument.split(',')) > 1:
             results: list[discord.Role] = []
-            for arg in argument.split(','):
+            # Limit to a max of 25 roles to prevent abuse
+            for arg in argument.split(',')[:25]:
                 role = await self.convert(ctx, arg.strip())
                 
                 assert isinstance(role, discord.Role), "Role must be a discord.Role instance."
@@ -773,11 +774,30 @@ class TimeDeltaConverter(Converter[datetime.timedelta]):
             'ms': 0.001, 's': 1, 'm': 60, 'h': 3600, 'd': 86400, 'w': 604800, 'y': 31536000
         }
         
-        time_units = {key: value for unit, value in base_units.items() for key in (
-            unit, unit + 's', unit + 'ec', unit + 'ecs', unit + 'in', unit + 'ins', 
-            unit + 'inute', unit + 'inutes', unit + 'our', unit + 'ours', unit + 'ay', 
-            unit + 'ays', unit + 'eek', unit + 'eeks', unit + 'ear', unit + 'ears', 
-            unit + 'illisecond', unit + 'illiseconds')}
+        time_units = {
+            key: value
+            for unit, value in base_units.items()
+            for key in (
+                unit,
+                f'{unit}s',
+                f'{unit}ec',
+                f'{unit}ecs',
+                f'{unit}in',
+                f'{unit}ins',
+                f'{unit}inute',
+                f'{unit}inutes',
+                f'{unit}our',
+                f'{unit}ours',
+                f'{unit}ay',
+                unit + 'ays',
+                unit + 'eek',
+                unit + 'eeks',
+                unit + 'ear',
+                unit + 'ears',
+                unit + 'illisecond',
+                unit + 'illiseconds',
+            )
+        }
 
         matches = re.findall(r'(\d+\.?\d*)\s*([a-zA-Z]+)', argument)
         if not matches:

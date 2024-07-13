@@ -100,15 +100,15 @@ __all__ = (
     'format_dt',
     'MISSING',
     'setup_logging',
+    'run_in_executor',
 )
 
 DISCORD_EPOCH = 1420070400000
 DEFAULT_FILE_SIZE_LIMIT_BYTES = 26214400
 
-
 def run_in_executor(func: Callable):
     @functools.wraps(func)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args: Any, **kwargs: Any) -> Awaitable[Any]:
         """A helper to run a synchronous function in an executor.
         This allows for a more efficient way to run blocking code.
         
@@ -142,7 +142,8 @@ def run_in_executor(func: Callable):
             The result of the function.
         """
         loop = asyncio.get_running_loop()
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        max_workers = kwargs.pop('max_workers', 2)
+        with concurrent.futures.ThreadPoolExecutor(max_workers) as executor:
             result = await loop.run_in_executor(executor, func, *args, **kwargs)
         return result
     return wrapper

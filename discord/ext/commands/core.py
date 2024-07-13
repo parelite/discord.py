@@ -427,7 +427,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         self.aliases: Union[List[str], Tuple[str]] = kwargs.get('aliases', [])
         self.extras: Dict[Any, Any] = kwargs.get('extras', {})
         
-        self.permissions: List[str] = []
+        self.user_permissions: List[str] = []
         self.bot_permissions: List[str] = []
 
         if not isinstance(self.aliases, (list, tuple)):

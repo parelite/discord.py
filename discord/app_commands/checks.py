@@ -38,7 +38,7 @@ from typing import (
 
 import time
 
-from .commands import Command, check
+from .commands import check
 
 from .errors import (
     NoPrivateMessage,
@@ -58,7 +58,7 @@ T = TypeVar('T')
 if TYPE_CHECKING:
     from typing_extensions import Self
     from ..interactions import Interaction
-    from ..ext.commands import AutoShardedBot, Bot
+    from ..ext.commands import AutoShardedBot, Bot, Command
 
     CooldownFunction = Union[
         Callable[[Interaction[Any]], Coroutine[Any, Any, T]],
@@ -336,7 +336,7 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
         permissions = interaction.permissions
 
         if isinstance(interaction.command, Command):
-            interaction.command.permissions.append(
+            interaction.command.user_permissions.append(
                 *[perm for perm, value in perms.items() if getattr(permissions, perm) != value]
             )
 

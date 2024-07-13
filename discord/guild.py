@@ -1002,31 +1002,31 @@ class Guild(Hashable):
         return self.get_member(self.owner_id)  # type: ignore
 
     @property
-    def icon(self) -> Optional[Asset]:
+    def icon(self) -> Asset:
         """Optional[:class:`Asset`]: Returns the guild's icon asset, if available."""
         if self._icon is None:
             return Asset(state = self._state, url = None, key = str(self.id))
         return Asset._from_guild_icon(self._state, self.id, self._icon)
 
     @property
-    def banner(self) -> Optional[Asset]:
+    def banner(self) -> Asset:
         """Optional[:class:`Asset`]: Returns the guild's banner asset, if available."""
         if self._banner is None:
-            return None
+            return Asset(state = self._state, url = None, key = str(self.id))
         return Asset._from_guild_image(self._state, self.id, self._banner, path='banners')
 
     @property
-    def splash(self) -> Optional[Asset]:
+    def splash(self) -> Asset:
         """Optional[:class:`Asset`]: Returns the guild's invite splash asset, if available."""
         if self._splash is None:
-            return None
+            return Asset(state = self._state, url = None, key = str(self.id))
         return Asset._from_guild_image(self._state, self.id, self._splash, path='splashes')
 
     @property
-    def discovery_splash(self) -> Optional[Asset]:
+    def discovery_splash(self) -> Asset:
         """Optional[:class:`Asset`]: Returns the guild's discovery splash asset, if available."""
         if self._discovery_splash is None:
-            return None
+            return Asset(state = self._state, url = None, key = str(self.id))
         return Asset._from_guild_image(self._state, self.id, self._discovery_splash, path='discovery-splashes')
 
     @property

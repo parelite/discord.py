@@ -851,7 +851,7 @@ class PartialEmojiConverter(Converter[discord.PartialEmoji]):
 
         raise PartialEmojiConversionFailure(argument)
 
-class BasicEmojiConverter(Converter[discord.BasicEmoji]):
+class BasicEmojiConverter(IDConverter[discord.BasicEmoji]):
     """Converts to a :class:`~discord.BasicEmoji`.
     
     All lookups are done for the local guild first, if available. If that lookup

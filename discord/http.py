@@ -593,11 +593,10 @@ class HTTPClient:
             'User-Agent': self.user_agent,
         }
 
-        if token is not None:
-            headers['Authorization'] = f'Bot {token}'
-            
-        if token is None and self.token is not None:
-            headers['Authorization'] = 'Bot ' + self.token
+
+        auth_token = token if token is not None else self.token
+        if auth_token is not None:
+            headers['Authorization'] = f'Bot {auth_token}'
             
         # some checking if it's a JSON request
         if 'json' in kwargs:

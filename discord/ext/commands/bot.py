@@ -324,14 +324,14 @@ class BotBase(GroupMixin[None]):
             return result
 
         return decorator
-
+    
     async def load_cogs_from_dir(self, path: str):
         """Recursively Load all cogs from directories and subdirectories."""
         for file in glob.glob(f'{path}/**/*.py', recursive=True):
             try:
                 await self.load_extension(file.replace('/', '.').replace('\\', '.')[:-3])
             except errors.ExtensionFailed as exception:
-                logging.warn(f'Failed to load extension {file}: {exception}')
+                logging.warning(f'Failed to load extension {file}: {exception}')
             except:
                 pass
 
@@ -1354,6 +1354,18 @@ class BotBase(GroupMixin[None]):
         ctx.command = self.all_commands.get(invoker)
         return ctx
 
+    async def handle_command_flags(self, ctx: Context[BotT]):
+        """ Handle command flags, replace message content to remove any present flags.
+
+        Args:
+            ctx: :class:`.Context`
+                The invocation context to handle flags for.
+        """
+        if ctx.command is not None and ctx.command._flag is not None:
+            ctx.flag = await ctx.command._flag.convert(ctx, ctx.message.content)
+            for name, value in ctx.flag:
+                ctx.message.content = ctx.message.content.strip().replace(f'--{name} {value}', '').replace(f'--{name}', '')
+            
     async def invoke(self, ctx: Context[BotT], /) -> None:
         """|coro|
 
@@ -1371,12 +1383,7 @@ class BotBase(GroupMixin[None]):
         """
         if ctx.command is not None:
             self.dispatch('command', ctx)
-            if ctx.command._flag is not None:
-                ctx.flag = await ctx.command._flag.convert(ctx, ctx.message.content)
-
-                for name, value in ctx.flag:
-                    ctx.message.content = ctx.message.content.strip().replace(f'--{name} {value}', '').replace(f'--{name}', '')
-                logging.info(ctx.message.content)
+            await self.handle_command_flags(ctx)
             try:
                 if await self.can_run(ctx, call_once=True):
                     await ctx.command.invoke(ctx)

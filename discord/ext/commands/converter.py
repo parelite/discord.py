@@ -24,6 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+import datetime
 import inspect
 import re
 from typing import (
@@ -751,6 +752,41 @@ class RoleConverter(IDConverter[discord.Role]):
 
         if result is None: raise RoleNotFound(argument)
         return result
+
+class TimeDeltaConverter(Converter[datetime.timedelta]):
+    """Converts to a :class:`~datetime.timedelta`.
+    
+    The following formats are accepted:
+    
+    - ``<number>[s|seconds|ms|milliseconds|m|minutes|h|hours|d|days|w|weeks|y|years]``
+    
+    The time units are case-insensitive and can be abbreviated (e.g. ``s`` for seconds, ``ms`` for milliseconds).
+    
+    Examples:
+    
+    - ``10s``
+    - ``10 minutes``
+    """
+    async def convert(self, ctx: Context, argument: str) -> datetime.timedelta:
+        """Converts a string into a timedelta object."""
+        base_units = {
+            'ms': 0.001, 's': 1, 'm': 60, 'h': 3600, 'd': 86400, 'w': 604800, 'y': 31536000
+        }
+        
+        time_units = {key: value for unit, value in base_units.items() for key in (
+            unit, unit + 's', unit + 'ec', unit + 'ecs', unit + 'in', unit + 'ins', 
+            unit + 'inute', unit + 'inutes', unit + 'our', unit + 'ours', unit + 'ay', 
+            unit + 'ays', unit + 'eek', unit + 'eeks', unit + 'ear', unit + 'ears', 
+            unit + 'illisecond', unit + 'illiseconds')}
+
+        matches = re.findall(r'(\d+\.?\d*)\s*([a-zA-Z]+)', argument)
+        if not matches:
+            raise BadArgument(f"Could not parse any time units from '{argument}'")
+
+        time = datetime.timedelta(seconds=sum(float(value) * time_units[unit] for value, unit in matches if unit in time_units))
+        if time.total_seconds() == 0:
+            raise BadArgument(f"Invalid time unit in '{argument}'")
+        return time
 
 class GameConverter(Converter[discord.Game]):
     """Converts to a :class:`~discord.Game`."""

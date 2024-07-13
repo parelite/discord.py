@@ -1357,7 +1357,7 @@ class BotBase(GroupMixin[None]):
             ctx.flag = await ctx.command._flag.convert(ctx, ctx.message.content)
 
             for name, value in ctx.flag:
-                ctx.message.content = ctx.message.content.strip().replace(f'--{name} {value}', '')
+                ctx.message.content = ctx.message.content.strip().replace(f'--{name} {value}', '').replace(f'--{name}', '')
             logging.info(ctx.message.content)
         return ctx
 

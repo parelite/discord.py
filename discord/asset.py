@@ -345,9 +345,7 @@ class Asset(AssetMixin):
         return len(self._url or '')
 
     def __repr__(self) -> str:
-        shorten = ''
-        if self._url is not None:
-            shorten = self._url.replace(self.BASE, '')
+        shorten = self._url.replace(self.BASE, '') if self._url is not None else ''
         return f'<Asset url={shorten!r}>'
 
     def __eq__(self, other: object) -> bool:

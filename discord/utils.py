@@ -100,10 +100,53 @@ __all__ = (
     'format_dt',
     'MISSING',
     'setup_logging',
+    'run_in_executor',
 )
 
 DISCORD_EPOCH = 1420070400000
 DEFAULT_FILE_SIZE_LIMIT_BYTES = 26214400
+
+def run_in_executor(func: Callable):
+    @functools.wraps(func)
+    async def wrapper(*args: Any, **kwargs: Any) -> Awaitable[Any]:
+        """A helper to run a synchronous function in an executor.
+        This allows for a more efficient way to run blocking code.
+        
+        Example:
+        
+        @run_in_executor
+        def create_collage(image_bytes_list, thumb_size=(350, 350), columns=5):
+            # This is a blocking function that creates a collage, if ran without an executor it would block the event loop.
+            images = [Image.open(BytesIO(image_bytes)) for image_bytes in image_bytes_list if image_bytes]
+            num_images = len(images)
+            
+            rows = math.ceil(num_images / columns)
+            
+            collage_width = thumb_size[0] * columns
+            collage_height = thumb_size[1] * rows
+            
+            collage_image = Image.new('RGBA', (collage_width, collage_height), color=(255, 0, 0, 0)) 
+            
+            for i, image in enumerate(images):
+                image = image.resize(thumb_size, Image.Resampling.LANCZOS)
+                x = (i % columns) * thumb_size[0]
+                y = (i // columns) * thumb_size[1]
+                collage_image.paste(image, (x, y))
+            
+            images_bytes = BytesIO()
+            collage_image.save(images_bytes, format='PNG')
+
+            return images_bytes.seek(0) 
+            
+        Returns:
+            The result of the function.
+        """
+        loop = asyncio.get_running_loop()
+        max_workers = kwargs.pop('max_workers', 2)
+        with concurrent.futures.ThreadPoolExecutor(max_workers) as executor:
+            result = await loop.run_in_executor(executor, func, *args, **kwargs)
+        return result
+    return wrapper
 
 
 def run_in_executor(func: Callable):

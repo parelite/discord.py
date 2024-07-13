@@ -28,6 +28,7 @@ from __future__ import annotations
 import asyncio
 import collections
 import collections.abc
+import glob
 import inspect
 import importlib.util
 import sys
@@ -323,6 +324,19 @@ class BotBase(GroupMixin[None]):
             return result
 
         return decorator
+    
+    async def load_cogs_from_dir(self, path: str):
+        """Recursively Load all cogs from directories and subdirectories."""
+        for file in glob.glob(f'{path}/**/*.py', recursive=True):
+            if file == '__init__.py':
+                continue
+            
+            try:
+                await self.load_extension(file.replace('/', '.').replace('\\', '.')[:-3])
+            except errors.ExtensionFailed as exception:
+                logging.info(f'Failed to load extension {file}: {exception}')
+            except:
+                pass
 
     # Error handler
 

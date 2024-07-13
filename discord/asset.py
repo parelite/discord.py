@@ -205,15 +205,17 @@ class Asset(AssetMixin):
         '_url',
         '_animated',
         '_key',
+        '_is_default',
     )
 
     BASE = 'https://cdn.discordapp.com'
 
-    def __init__(self, state: _State, *, url: str, key: str, animated: bool = False) -> None:
+    def __init__(self, state: _State, *, url: Union[str, None], key: str, animated: bool = False, is_default: bool = False) -> None:
         self._state: _State = state
-        self._url: str = url
+        self._url: Union[str, None] = url
         self._animated: bool = animated
         self._key: str = key
+        self._is_default: bool = is_default
 
     @classmethod
     def _from_default_avatar(cls, state: _State, index: int) -> Self:
@@ -222,6 +224,7 @@ class Asset(AssetMixin):
             url=f'{cls.BASE}/embed/avatars/{index}.png',
             key=str(index),
             animated=False,
+            is_default=True,
         )
 
     @classmethod
@@ -336,13 +339,15 @@ class Asset(AssetMixin):
         )
 
     def __str__(self) -> str:
-        return self._url
+        return self._url or ''
 
     def __len__(self) -> int:
-        return len(self._url)
+        return len(self._url or '')
 
     def __repr__(self) -> str:
-        shorten = self._url.replace(self.BASE, '')
+        shorten = ''
+        if self._url is not None:
+            shorten = self._url.replace(self.BASE, '')
         return f'<Asset url={shorten!r}>'
 
     def __eq__(self, other: object) -> bool:
@@ -350,9 +355,14 @@ class Asset(AssetMixin):
 
     def __hash__(self) -> int:
         return hash(self._url)
+    
+    @property
+    def is_default(self) -> bool:
+        """:class:`bool`: Returns whether the asset is a default asset."""
+        return self._is_default
 
     @property
-    def url(self) -> str:
+    def url(self) -> Union[str, None]:
         """:class:`str`: Returns the underlying URL of the asset."""
         return self._url
 

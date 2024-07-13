@@ -527,6 +527,23 @@ class PartialEmojiConversionFailure(BadArgument):
         self.argument: str = argument
         super().__init__(f'Couldn\'t convert "{argument}" to PartialEmoji.')
 
+class BasicEmojiConversionFailure(BadArgument):
+    """Exception raised when the emoji provided does not match the correct
+    format.
+
+    This inherits from :exc:`BadArgument`
+
+    .. versionadded:: 1.5
+
+    Attributes
+    -----------
+    argument: :class:`str`
+        The emoji supplied by the caller that did not match the regex
+    """
+
+    def __init__(self, argument: str) -> None:
+        self.argument: str = argument
+        super().__init__(f'Couldn\'t convert "{argument}" to BasicEmoji.')
 
 class GuildStickerNotFound(BadArgument):
     """Exception raised when the bot can not find the sticker.

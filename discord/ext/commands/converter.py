@@ -705,7 +705,7 @@ class ColourConverter(Converter[discord.Colour]):
 
 ColorConverter = ColourConverter
 
-class RolesConverter(IDConverter[List[discord.Role]]):
+class RoleConverter(IDConverter[discord.Role]):
     """Converts to a :class:`~Union[discord.Role, List[discord.Role]]`.
     
     All lookups are via the local guild. If in a DM context, the converter raises
@@ -751,38 +751,6 @@ class RolesConverter(IDConverter[List[discord.Role]]):
 
         if result is None: raise RoleNotFound(argument)
         return result
-
-class RoleConverter(IDConverter[discord.Role]):
-    """Converts to a :class:`~discord.Role`.
-
-    All lookups are via the local guild. If in a DM context, the converter raises
-    :exc:`.NoPrivateMessage` exception.
-
-    The lookup strategy is as follows (in order):
-
-    1. Lookup by ID.
-    2. Lookup by mention.
-    3. Lookup by name
-
-    .. versionchanged:: 1.5
-         Raise :exc:`.RoleNotFound` instead of generic :exc:`.BadArgument`
-    """
-
-    async def convert(self, ctx: Context[BotT], argument: str) -> discord.Role:
-        guild = ctx.guild
-        if not guild:
-            raise NoPrivateMessage()
-
-        match = self._get_id_match(argument) or re.match(r'<@&([0-9]{15,20})>$', argument)
-        if match:
-            result = guild.get_role(int(match.group(1)))
-        else:
-            result = discord.utils.get(guild._roles.values(), name=argument)
-
-        if result is None:
-            raise RoleNotFound(argument)
-        return result
-
 
 class GameConverter(Converter[discord.Game]):
     """Converts to a :class:`~discord.Game`."""

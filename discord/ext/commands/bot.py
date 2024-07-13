@@ -324,7 +324,7 @@ class BotBase(GroupMixin[None]):
             return result
 
         return decorator
-    
+
     async def load_cogs_from_dir(self, path: str):
         """Recursively Load all cogs from directories and subdirectories."""
         for file in glob.glob(f'{path}/**/*.py', recursive=True):
@@ -1253,8 +1253,7 @@ class BotBase(GroupMixin[None]):
         /,
         *,
         cls: Type[ContextT],
-    ) -> ContextT:
-        ...
+    ) -> ContextT: ...
 
     async def get_context(
         self,
@@ -1371,6 +1370,12 @@ class BotBase(GroupMixin[None]):
             The invocation context to invoke.
         """
         if ctx.command is not None:
+            if ctx.command._flag is not None:
+                ctx.flag = await ctx.command._flag.convert(ctx, ctx.message.content)
+
+                for name, value in ctx.flag:
+                    ctx.message.content = ctx.message.content.replace(f'--{name}', '').replace(f'--{name} {value}', '')
+
             self.dispatch('command', ctx)
             try:
                 if await self.can_run(ctx, call_once=True):

@@ -27,6 +27,7 @@ import re
 from typing import TYPE_CHECKING, Any, Dict, Generator, Generic, List, Optional, TypeVar, Union, Sequence, Type, overload
 
 import discord.abc
+from discord.ext.commands.flags import FlagConverter
 import discord.utils
 from discord import Interaction, Message, Attachment, MessageType, User, PartialMessageable, Permissions, ChannelType, Thread
 from discord.context_managers import Typing
@@ -196,6 +197,7 @@ class Context(discord.abc.Messageable, Generic[BotT]):
         self.message: Message = message
         self.bot: BotT = bot
         self.args: List[Any] = args or []
+        self.flag: Optional[FlagConverter] = None
         self.kwargs: Dict[str, Any] = kwargs or {}
         self.prefix: Optional[str] = prefix
         self.command: Optional[Command[Any, ..., Any]] = command

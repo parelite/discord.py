@@ -875,11 +875,15 @@ class BasicEmojiConverter(IDConverter[discord.BasicEmoji]):
     async def convert(self, ctx: Context[BotT], argument: str) -> discord.BasicEmoji:
         match = self._get_id_match(argument) or re.match(r'<a?:[a-zA-Z0-9\_]{1,32}:([0-9]{15,20})>$', argument)
         result = None
+        bot = ctx.bot
         guild = ctx.guild
 
         if match is None:
             if guild:
                 result = discord.utils.get(guild.emojis, name=argument)
+
+            if result is None:
+                result = discord.utils.get(bot.emojis, name=argument)
         
         if guild and match is not None:
             # Try to look up emoji by id.

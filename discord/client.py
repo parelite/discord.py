@@ -294,6 +294,7 @@ class Client:
         self._application: Optional[AppInfo] = None
         self._connection._get_websocket = self._get_websocket
         self._connection._get_client = lambda: self
+        self.mobile_status: bool = options.get('mobile_status', False)
 
         if VoiceClient.warn_nacl:
             VoiceClient.warn_nacl = False

@@ -149,6 +149,48 @@ def run_in_executor(func: Callable):
     return wrapper
 
 
+def run_in_executor(func: Callable):
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        """A helper to run a synchronous function in an executor.
+        This allows for a more efficient way to run blocking code.
+        
+        Example:
+        
+        @run_in_executor
+        def create_collage(image_bytes_list, thumb_size=(350, 350), columns=5):
+            # This is a blocking function that creates a collage, if ran without an executor it would block the event loop.
+            images = [Image.open(BytesIO(image_bytes)) for image_bytes in image_bytes_list if image_bytes]
+            num_images = len(images)
+            
+            rows = math.ceil(num_images / columns)
+            
+            collage_width = thumb_size[0] * columns
+            collage_height = thumb_size[1] * rows
+            
+            collage_image = Image.new('RGBA', (collage_width, collage_height), color=(255, 0, 0, 0)) 
+            
+            for i, image in enumerate(images):
+                image = image.resize(thumb_size, Image.Resampling.LANCZOS)
+                x = (i % columns) * thumb_size[0]
+                y = (i // columns) * thumb_size[1]
+                collage_image.paste(image, (x, y))
+            
+            images_bytes = BytesIO()
+            collage_image.save(images_bytes, format='PNG')
+
+            return images_bytes.seek(0) 
+            
+        Returns:
+            The result of the function.
+        """
+        loop = asyncio.get_running_loop()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            result = await loop.run_in_executor(executor, func, *args, **kwargs)
+        return result
+    return wrapper
+
+
 class _MissingSentinel:
     __slots__ = ()
 

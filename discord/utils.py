@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
+
 from __future__ import annotations
 
 import array
@@ -63,6 +64,7 @@ import functools
 from inspect import isawaitable as _isawaitable, signature as _signature
 from operator import attrgetter
 from urllib.parse import urlencode
+import concurrent.futures
 import json
 import re
 import os
@@ -102,6 +104,48 @@ __all__ = (
 
 DISCORD_EPOCH = 1420070400000
 DEFAULT_FILE_SIZE_LIMIT_BYTES = 26214400
+
+
+def run_in_executor(func: Callable):
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        """A helper to run a synchronous function in an executor.
+        This allows for a more efficient way to run blocking code.
+        
+        Example:
+        
+        @run_in_executor
+        def create_collage(image_bytes_list, thumb_size=(350, 350), columns=5):
+            # This is a blocking function that creates a collage, if ran without an executor it would block the event loop.
+            images = [Image.open(BytesIO(image_bytes)) for image_bytes in image_bytes_list if image_bytes]
+            num_images = len(images)
+            
+            rows = math.ceil(num_images / columns)
+            
+            collage_width = thumb_size[0] * columns
+            collage_height = thumb_size[1] * rows
+            
+            collage_image = Image.new('RGBA', (collage_width, collage_height), color=(255, 0, 0, 0)) 
+            
+            for i, image in enumerate(images):
+                image = image.resize(thumb_size, Image.Resampling.LANCZOS)
+                x = (i % columns) * thumb_size[0]
+                y = (i // columns) * thumb_size[1]
+                collage_image.paste(image, (x, y))
+            
+            images_bytes = BytesIO()
+            collage_image.save(images_bytes, format='PNG')
+
+            return images_bytes.seek(0) 
+            
+        Returns:
+            The result of the function.
+        """
+        loop = asyncio.get_running_loop()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            result = await loop.run_in_executor(executor, func, *args, **kwargs)
+        return result
+    return wrapper
 
 
 class _MissingSentinel:
@@ -176,12 +220,10 @@ class CachedSlotProperty(Generic[T, T_co]):
         self.__doc__ = getattr(function, '__doc__')
 
     @overload
-    def __get__(self, instance: None, owner: Type[T]) -> CachedSlotProperty[T, T_co]:
-        ...
+    def __get__(self, instance: None, owner: Type[T]) -> CachedSlotProperty[T, T_co]: ...
 
     @overload
-    def __get__(self, instance: T, owner: Type[T]) -> T_co:
-        ...
+    def __get__(self, instance: T, owner: Type[T]) -> T_co: ...
 
     def __get__(self, instance: Optional[T], owner: Type[T]) -> Any:
         if instance is None:
@@ -233,12 +275,10 @@ class SequenceProxy(Sequence[T_co]):
         return f"SequenceProxy({self.__proxied!r})"
 
     @overload
-    def __getitem__(self, idx: SupportsIndex) -> T_co:
-        ...
+    def __getitem__(self, idx: SupportsIndex) -> T_co: ...
 
     @overload
-    def __getitem__(self, idx: slice) -> List[T_co]:
-        ...
+    def __getitem__(self, idx: slice) -> List[T_co]: ...
 
     def __getitem__(self, idx: Union[SupportsIndex, slice]) -> Union[T_co, List[T_co]]:
         return self.__copied[idx]
@@ -263,18 +303,15 @@ class SequenceProxy(Sequence[T_co]):
 
 
 @overload
-def parse_time(timestamp: None) -> None:
-    ...
+def parse_time(timestamp: None) -> None: ...
 
 
 @overload
-def parse_time(timestamp: str) -> datetime.datetime:
-    ...
+def parse_time(timestamp: str) -> datetime.datetime: ...
 
 
 @overload
-def parse_time(timestamp: Optional[str]) -> Optional[datetime.datetime]:
-    ...
+def parse_time(timestamp: Optional[str]) -> Optional[datetime.datetime]: ...
 
 
 def parse_time(timestamp: Optional[str]) -> Optional[datetime.datetime]:
@@ -436,13 +473,11 @@ async def _afind(predicate: Callable[[T], Any], iterable: AsyncIterable[T], /) -
 
 
 @overload
-def find(predicate: Callable[[T], Any], iterable: AsyncIterable[T], /) -> Coro[Optional[T]]:
-    ...
+def find(predicate: Callable[[T], Any], iterable: AsyncIterable[T], /) -> Coro[Optional[T]]: ...
 
 
 @overload
-def find(predicate: Callable[[T], Any], iterable: Iterable[T], /) -> Optional[T]:
-    ...
+def find(predicate: Callable[[T], Any], iterable: Iterable[T], /) -> Optional[T]: ...
 
 
 def find(predicate: Callable[[T], Any], iterable: _Iter[T], /) -> Union[Optional[T], Coro[Optional[T]]]:
@@ -522,13 +557,11 @@ async def _aget(iterable: AsyncIterable[T], /, **attrs: Any) -> Optional[T]:
 
 
 @overload
-def get(iterable: AsyncIterable[T], /, **attrs: Any) -> Coro[Optional[T]]:
-    ...
+def get(iterable: AsyncIterable[T], /, **attrs: Any) -> Coro[Optional[T]]: ...
 
 
 @overload
-def get(iterable: Iterable[T], /, **attrs: Any) -> Optional[T]:
-    ...
+def get(iterable: Iterable[T], /, **attrs: Any) -> Optional[T]: ...
 
 
 def get(iterable: _Iter[T], /, **attrs: Any) -> Union[Optional[T], Coro[Optional[T]]]:
@@ -735,13 +768,11 @@ def compute_timedelta(dt: datetime.datetime) -> float:
 
 
 @overload
-async def sleep_until(when: datetime.datetime, result: T) -> T:
-    ...
+async def sleep_until(when: datetime.datetime, result: T) -> T: ...
 
 
 @overload
-async def sleep_until(when: datetime.datetime) -> None:
-    ...
+async def sleep_until(when: datetime.datetime) -> None: ...
 
 
 async def sleep_until(when: datetime.datetime, result: Optional[T] = None) -> Optional[T]:
@@ -802,8 +833,7 @@ class SnowflakeList(_SnowflakeListBase):
 
     if TYPE_CHECKING:
 
-        def __init__(self, data: Iterable[int], *, is_sorted: bool = False):
-            ...
+        def __init__(self, data: Iterable[int], *, is_sorted: bool = False): ...
 
     def __new__(cls, data: Iterable[int], *, is_sorted: bool = False) -> Self:
         return array.array.__new__(cls, 'Q', data if is_sorted else sorted(data))  # type: ignore
@@ -1041,13 +1071,11 @@ async def _achunk(iterator: AsyncIterable[T], max_size: int) -> AsyncIterator[Li
 
 
 @overload
-def as_chunks(iterator: AsyncIterable[T], max_size: int) -> AsyncIterator[List[T]]:
-    ...
+def as_chunks(iterator: AsyncIterable[T], max_size: int) -> AsyncIterator[List[T]]: ...
 
 
 @overload
-def as_chunks(iterator: Iterable[T], max_size: int) -> Iterator[List[T]]:
-    ...
+def as_chunks(iterator: Iterable[T], max_size: int) -> Iterator[List[T]]: ...
 
 
 def as_chunks(iterator: _Iter[T], max_size: int) -> _Iter[List[T]]:

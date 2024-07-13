@@ -522,7 +522,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
         self.params: Dict[str, Parameter] = get_signature_parameters(function, globalns)
 
-    @property
+    @discord.utils.cached_property
     def arguments(self: Command) -> List[CommandArgument]:
         # Uses get_origin to check if the annotation is a Literal
         # If it is, we need to use get_args to return the literal values

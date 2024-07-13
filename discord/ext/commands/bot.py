@@ -334,7 +334,7 @@ class BotBase(GroupMixin[None]):
             try:
                 await self.load_extension(file.replace('/', '.').replace('\\', '.')[:-3])
             except errors.ExtensionFailed as exception:
-                logging.info(f'Failed to load extension {file}: {exception}')
+                logging.warn(f'Failed to load extension {file}: {exception}')
             except:
                 pass
 

@@ -148,7 +148,6 @@ def run_in_executor(func: Callable):
         return result
     return wrapper
 
-
 class _MissingSentinel:
     __slots__ = ()
 

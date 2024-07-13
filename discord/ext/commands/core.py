@@ -50,6 +50,7 @@ from typing import (
 import re
 
 import discord
+from discord.ext.commands.flags import FlagConverter
 
 from ._types import _BaseCommand, CogT
 from .cog import Cog
@@ -427,6 +428,8 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         self.aliases: Union[List[str], Tuple[str]] = kwargs.get('aliases', [])
         self.extras: Dict[Any, Any] = kwargs.get('extras', {})
         
+        self._flag: Optional[FlagConverter] = kwargs.get('flag')
+        
         self.user_permissions: List[str] = []
         self.bot_permissions: List[str] = []
 
@@ -747,6 +750,10 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
                     raise exc
         view.previous = previous
 
+        if ctx.flag is not None and argument is not None:
+            for name, value in ctx.flag:
+                argument = argument.strip().replace(f'--{name} {value}', '').replace(f'--{name}', '')
+                
         # type-checker fails to narrow argument
         return await run_converters(ctx, converter, argument, param)  # type: ignore
 
@@ -1061,6 +1068,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         # the invoked subcommand is None.
         ctx.invoked_subcommand = None
         ctx.subcommand_passed = None
+        
         injected = hooked_wrapped_callback(self, ctx, self.callback)  # type: ignore
         await injected(*ctx.args, **ctx.kwargs)  # type: ignore
 

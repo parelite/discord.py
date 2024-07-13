@@ -571,6 +571,7 @@ class HTTPClient:
         *,
         files: Optional[Sequence[File]] = None,
         form: Optional[Iterable[Dict[str, Any]]] = None,
+        token: Optional[str] = None,
         **kwargs: Any,
     ) -> Any:
         method = route.method
@@ -592,8 +593,12 @@ class HTTPClient:
             'User-Agent': self.user_agent,
         }
 
-        if self.token is not None:
+        if token is not None:
+            headers['Authorization'] = f'Bot {token}'
+            
+        if token is None and self.token is not None:
             headers['Authorization'] = 'Bot ' + self.token
+            
         # some checking if it's a JSON request
         if 'json' in kwargs:
             headers['Content-Type'] = 'application/json'

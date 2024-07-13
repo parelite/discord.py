@@ -1005,7 +1005,7 @@ class Guild(Hashable):
     def icon(self) -> Optional[Asset]:
         """Optional[:class:`Asset`]: Returns the guild's icon asset, if available."""
         if self._icon is None:
-            return None
+            return Asset(state = self._state, url = None, key = str(self.id))
         return Asset._from_guild_icon(self._state, self.id, self._icon)
 
     @property

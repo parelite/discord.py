@@ -209,9 +209,9 @@ class Asset(AssetMixin):
 
     BASE = 'https://cdn.discordapp.com'
 
-    def __init__(self, state: _State, *, url: str, key: str, animated: bool = False) -> None:
+    def __init__(self, state: _State, *, url: Union[str, None], key: str, animated: bool = False) -> None:
         self._state: _State = state
-        self._url: str = url
+        self._url: Union[str, None] = url
         self._animated: bool = animated
         self._key: str = key
 
@@ -336,13 +336,15 @@ class Asset(AssetMixin):
         )
 
     def __str__(self) -> str:
-        return self._url
+        return self._url or ''
 
     def __len__(self) -> int:
-        return len(self._url)
+        return len(self._url or '')
 
     def __repr__(self) -> str:
-        shorten = self._url.replace(self.BASE, '')
+        shorten = ''
+        if self._url is not None:
+            shorten = self._url.replace(self.BASE, '')
         return f'<Asset url={shorten!r}>'
 
     def __eq__(self, other: object) -> bool:
@@ -352,7 +354,7 @@ class Asset(AssetMixin):
         return hash(self._url)
 
     @property
-    def url(self) -> str:
+    def url(self) -> Union[str, None]:
         """:class:`str`: Returns the underlying URL of the asset."""
         return self._url
 

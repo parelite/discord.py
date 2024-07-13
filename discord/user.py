@@ -161,12 +161,12 @@ class BaseUser(_UserTag):
     def avatar(self) -> Optional[Asset]:
         """Optional[:class:`Asset`]: Returns an :class:`Asset` for the avatar the user has.
 
-        If the user has not uploaded a global avatar, ``None`` is returned.
+        If the user has not uploaded a global avatar, ``default_avatar`` is returned.
         If you want the avatar that a user has displayed, consider :attr:`display_avatar`.
         """
         if self._avatar is not None:
             return Asset._from_avatar(self._state, self.id, self._avatar)
-        return None
+        return self.default_avatar
 
     @property
     def default_avatar(self) -> Asset:

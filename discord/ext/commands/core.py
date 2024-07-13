@@ -750,6 +750,10 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
                     raise exc
         view.previous = previous
 
+        if ctx.flag is not None and argument is not None:
+            for name, value in ctx.flag:
+                argument = argument.strip().replace(f'--{name} {value}', '').replace(f'--{name}', '')
+                
         # type-checker fails to narrow argument
         return await run_converters(ctx, converter, argument, param)  # type: ignore
 

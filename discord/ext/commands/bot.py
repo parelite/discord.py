@@ -1374,8 +1374,8 @@ class BotBase(GroupMixin[None]):
                 ctx.flag = await ctx.command._flag.convert(ctx, ctx.message.content)
 
                 for name, value in ctx.flag:
-                    ctx.message.content = ctx.message.content.replace(f'--{name}', '').replace(f'--{name} {value}', '')
-
+                    ctx.message.content = ctx.message.content.strip().replace(f'--{name}', '').replace(f'--{name} {value}', '')
+                logging.info(ctx.message.content)
             self.dispatch('command', ctx)
             try:
                 if await self.can_run(ctx, call_once=True):

@@ -1346,12 +1346,19 @@ class BotBase(GroupMixin[None]):
 
         if self.strip_after_prefix:
             view.skip_ws()
-
+        
         invoker = view.get_word()
         ctx.invoked_with = invoker
         # type-checker fails to narrow invoked_prefix type.
         ctx.prefix = invoked_prefix  # type: ignore
         ctx.command = self.all_commands.get(invoker)
+        
+        if ctx.command is not None and ctx.command._flag is not None:
+            ctx.flag = await ctx.command._flag.convert(ctx, ctx.message.content)
+
+            for name, value in ctx.flag:
+                ctx.message.content = ctx.message.content.strip().replace(f'--{name} {value}', '')
+            logging.info(ctx.message.content)
         return ctx
 
     async def invoke(self, ctx: Context[BotT], /) -> None:
@@ -1370,12 +1377,6 @@ class BotBase(GroupMixin[None]):
             The invocation context to invoke.
         """
         if ctx.command is not None:
-            if ctx.command._flag is not None:
-                ctx.flag = await ctx.command._flag.convert(ctx, ctx.message.content)
-
-                for name, value in ctx.flag:
-                    ctx.message.content = ctx.message.content.strip().replace(f'--{name}', '').replace(f'--{name} {value}', '')
-                logging.info(ctx.message.content)
             self.dispatch('command', ctx)
             try:
                 if await self.can_run(ctx, call_once=True):

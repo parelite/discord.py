@@ -1375,6 +1375,7 @@ CONVERTER_MAPPING: Dict[type, Any] = {
     discord.VoiceChannel: VoiceChannelConverter,
     discord.StageChannel: StageChannelConverter,
     discord.Emoji: EmojiConverter,
+    discord.BasicEmoji: BasicEmojiConverter,
     discord.PartialEmoji: PartialEmojiConverter,
     discord.CategoryChannel: CategoryChannelConverter,
     discord.Thread: ThreadConverter,

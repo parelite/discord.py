@@ -48,6 +48,7 @@ import types
 import discord
 
 from .errors import *
+from .errors import BasicEmojiConversionFailure
 
 if TYPE_CHECKING:
     from discord.state import Channel
@@ -891,7 +892,7 @@ class BasicEmojiConverter(IDConverter[discord.BasicEmoji]):
             result = argument
         
         if result is None:
-            raise EmojiNotFound(argument)
+            raise BasicEmojiConversionFailure(argument)
 
         if isinstance(result, str):
             return discord.BasicEmoji(name=result)

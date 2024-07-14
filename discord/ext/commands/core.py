@@ -59,13 +59,13 @@ from .converter import Greedy, run_converters
 from .cooldowns import BucketType, Cooldown, CooldownMapping, DynamicCooldownMapping, MaxConcurrency
 from .errors import *
 from .parameters import Parameter, Signature
+from ..commands import AutoShardedBot, Bot, Command
 from discord.app_commands.commands import NUMPY_DOCSTRING_ARG_REGEX
 
 if TYPE_CHECKING:
     from typing_extensions import Concatenate, ParamSpec, Self
 
     from ._types import BotT, Check, ContextT, Coro, CoroFunc, Error, Hook, UserCheck
-    from ..commands import AutoShardedBot, Bot, Command
 
 
 __all__ = (

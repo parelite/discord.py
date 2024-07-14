@@ -2249,8 +2249,8 @@ def has_permissions(**perms: bool) -> Check[Any]:
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
         if isinstance(ctx.command, Command):
-            ctx.command.user_permissions.append(
-                *[perm for perm, value in perms.items() if getattr(permissions, perm) != value]
+            ctx.command.user_permissions.extend(
+                [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
             )
 
         if ctx.bot.owner_ids is not None and ctx.author.id in ctx.bot.owner_ids:

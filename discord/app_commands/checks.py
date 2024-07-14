@@ -336,9 +336,10 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
         permissions = interaction.permissions
 
         if isinstance(interaction.command, Command):
-            interaction.command.user_permissions.append(
-                *[perm for perm, value in perms.items() if getattr(permissions, perm) != value]
+            interaction.command.user_permissions.extend(
+                [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
             )
+
 
         # Will cause exception if interaction.client is not commands.AutoShardedBot or commands.Bot - Works on the assumption that the user uses either of them.
         assert isinstance(

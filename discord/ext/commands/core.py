@@ -65,6 +65,7 @@ if TYPE_CHECKING:
     from typing_extensions import Concatenate, ParamSpec, Self
 
     from ._types import BotT, Check, ContextT, Coro, CoroFunc, Error, Hook, UserCheck
+    from ..commands import AutoShardedBot, Bot, Command
 
 
 __all__ = (
@@ -2248,6 +2249,19 @@ def has_permissions(**perms: bool) -> Check[Any]:
 
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
+        if isinstance(ctx.command, Command):
+            ctx.command.user_permissions.append(
+                *[perm for perm, value in perms.items() if getattr(permissions, perm) != value]
+            )
+
+        # Will cause exception if ctx.bot is not commands.AutoShardedBot or commands.Bot - Works on the assumption that the user uses either of them.
+        assert isinstance(
+            ctx.bot, (AutoShardedBot, Bot)
+        ), "ctx.bot must be an instance of commands.AutoShardedBot or commands.Bot"
+
+        if ctx.bot.owner_ids is not None and ctx.author.id in ctx.bot.owner_ids:
+            return True
+        
         if not missing:
             return True
 

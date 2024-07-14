@@ -59,7 +59,6 @@ from .converter import Greedy, run_converters
 from .cooldowns import BucketType, Cooldown, CooldownMapping, DynamicCooldownMapping, MaxConcurrency
 from .errors import *
 from .parameters import Parameter, Signature
-from ..commands import AutoShardedBot, Bot, Command
 from discord.app_commands.commands import NUMPY_DOCSTRING_ARG_REGEX
 
 if TYPE_CHECKING:
@@ -2253,11 +2252,6 @@ def has_permissions(**perms: bool) -> Check[Any]:
             ctx.command.user_permissions.append(
                 *[perm for perm, value in perms.items() if getattr(permissions, perm) != value]
             )
-
-        # Will cause exception if ctx.bot is not commands.AutoShardedBot or commands.Bot - Works on the assumption that the user uses either of them.
-        assert isinstance(
-            ctx.bot, (AutoShardedBot, Bot)
-        ), "ctx.bot must be an instance of commands.AutoShardedBot or commands.Bot"
 
         if ctx.bot.owner_ids is not None and ctx.author.id in ctx.bot.owner_ids:
             return True

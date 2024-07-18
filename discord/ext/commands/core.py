@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -296,11 +297,13 @@ class _AttachmentIterator:
     def is_empty(self) -> bool:
         return self.index >= len(self.data)
 
+
 @dataclass
 class CommandArgument:
     name: str
     optional: bool
-    
+
+
 class Command(_BaseCommand, Generic[CogT, P, T]):
     r"""A class that implements the protocol for a bot text command.
 
@@ -376,6 +379,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
         .. versionadded:: 2.0
     """
+
     __original_kwargs__: Dict[str, Any]
 
     def __new__(cls, *args: Any, **kwargs: Any) -> Self:
@@ -427,9 +431,9 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         self.rest_is_raw: bool = kwargs.get('rest_is_raw', False)
         self.aliases: Union[List[str], Tuple[str]] = kwargs.get('aliases', [])
         self.extras: Dict[Any, Any] = kwargs.get('extras', {})
-        
+
         self._flag: Optional[FlagConverter] = kwargs.get('flag')
-        
+
         self.user_permissions: List[str] = []
         self.bot_permissions: List[str] = []
 
@@ -503,7 +507,10 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
     @property
     def callback(
         self,
-    ) -> Union[Callable[Concatenate[CogT, Context[Any], P], Coro[T]], Callable[Concatenate[Context[Any], P], Coro[T]],]:
+    ) -> Union[
+        Callable[Concatenate[CogT, Context[Any], P], Coro[T]],
+        Callable[Concatenate[Context[Any], P], Coro[T]],
+    ]:
         return self._callback
 
     @callback.setter
@@ -537,16 +544,16 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
                 if len(literal_values) > 1:
                     return ', '.join([f"'{value}'" for value in literal_values[:-1]]) + f" or '{literal_values[-1]}'"
                 else:
-                    return f'`{literal_values[0]}`' # type: ignore
+                    return f'`{literal_values[0]}`'  # type: ignore
             return name.replace('_', ' ')
-        
+
         # Skip the first two parameters (self and Interaction, or Context)
         # and return the rest as CommandArguments
         # If parameter annotation is Union with type(None), it's optional
         return [
             CommandArgument(
                 name=get_parameter_name(name, param.annotation),
-                optional=(get_origin(param.annotation) is Union and type(None) in get_args(param.annotation))
+                optional=(get_origin(param.annotation) is Union and type(None) in get_args(param.annotation)),
             )
             for name, param in list(inspect.signature(self.callback).parameters.items())[2:]
         ]
@@ -753,7 +760,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         if ctx.flag is not None and argument is not None:
             for name, value in ctx.flag:
                 argument = argument.strip().replace(f'--{name} {value}', '').replace(f'--{name}', '')
-                
+
         # type-checker fails to narrow argument
         return await run_converters(ctx, converter, argument, param)  # type: ignore
 
@@ -1068,7 +1075,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         # the invoked subcommand is None.
         ctx.invoked_subcommand = None
         ctx.subcommand_passed = None
-        
+
         injected = hooked_wrapped_callback(self, ctx, self.callback)  # type: ignore
         await injected(*ctx.args, **ctx.kwargs)  # type: ignore
 
@@ -1521,8 +1528,7 @@ class GroupMixin(Generic[CogT]):
             ]
         ],
         Command[CogT, P, T],
-    ]:
-        ...
+    ]: ...
 
     @overload
     def command(
@@ -1539,8 +1545,7 @@ class GroupMixin(Generic[CogT]):
             ]
         ],
         CommandT,
-    ]:
-        ...
+    ]: ...
 
     def command(
         self,
@@ -1581,8 +1586,7 @@ class GroupMixin(Generic[CogT]):
             ]
         ],
         Group[CogT, P, T],
-    ]:
-        ...
+    ]: ...
 
     @overload
     def group(
@@ -1599,8 +1603,7 @@ class GroupMixin(Generic[CogT]):
             ]
         ],
         GroupT,
-    ]:
-        ...
+    ]: ...
 
     def group(
         self,
@@ -1746,35 +1749,28 @@ if TYPE_CHECKING:
 
     class _CommandDecorator:
         @overload
-        def __call__(self, func: Callable[Concatenate[CogT, ContextT, P], Coro[T]], /) -> Command[CogT, P, T]:
-            ...
+        def __call__(self, func: Callable[Concatenate[CogT, ContextT, P], Coro[T]], /) -> Command[CogT, P, T]: ...
 
         @overload
-        def __call__(self, func: Callable[Concatenate[ContextT, P], Coro[T]], /) -> Command[None, P, T]:
-            ...
+        def __call__(self, func: Callable[Concatenate[ContextT, P], Coro[T]], /) -> Command[None, P, T]: ...
 
-        def __call__(self, func: Callable[..., Coro[T]], /) -> Any:
-            ...
+        def __call__(self, func: Callable[..., Coro[T]], /) -> Any: ...
 
     class _GroupDecorator:
         @overload
-        def __call__(self, func: Callable[Concatenate[CogT, ContextT, P], Coro[T]], /) -> Group[CogT, P, T]:
-            ...
+        def __call__(self, func: Callable[Concatenate[CogT, ContextT, P], Coro[T]], /) -> Group[CogT, P, T]: ...
 
         @overload
-        def __call__(self, func: Callable[Concatenate[ContextT, P], Coro[T]], /) -> Group[None, P, T]:
-            ...
+        def __call__(self, func: Callable[Concatenate[ContextT, P], Coro[T]], /) -> Group[None, P, T]: ...
 
-        def __call__(self, func: Callable[..., Coro[T]], /) -> Any:
-            ...
+        def __call__(self, func: Callable[..., Coro[T]], /) -> Any: ...
 
 
 @overload
 def command(
     name: str = ...,
     **attrs: Any,
-) -> _CommandDecorator:
-    ...
+) -> _CommandDecorator: ...
 
 
 @overload
@@ -1790,8 +1786,7 @@ def command(
         ]
     ],
     CommandT,
-]:
-    ...
+]: ...
 
 
 def command(
@@ -1843,8 +1838,7 @@ def command(
 def group(
     name: str = ...,
     **attrs: Any,
-) -> _GroupDecorator:
-    ...
+) -> _GroupDecorator: ...
 
 
 @overload
@@ -1860,8 +1854,7 @@ def group(
         ]
     ],
     GroupT,
-]:
-    ...
+]: ...
 
 
 def group(
@@ -2136,9 +2129,11 @@ def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
 
         # ctx.guild is None doesn't narrow ctx.author to Member
         if any(
-            ctx.author.get_role(item) is not None
-            if isinstance(item, int)
-            else discord.utils.get(ctx.author.roles, name=item) is not None
+            (
+                ctx.author.get_role(item) is not None
+                if isinstance(item, int)
+                else discord.utils.get(ctx.author.roles, name=item) is not None
+            )
             for item in items
         ):
             return True
@@ -2248,14 +2243,14 @@ def has_permissions(**perms: bool) -> Check[Any]:
 
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
-        if isinstance(ctx.command, Command):
+        if ctx.command is not None:
             ctx.command.user_permissions.extend(
                 [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
             )
 
         if ctx.bot.owner_ids is not None and ctx.author.id in ctx.bot.owner_ids:
             return True
-        
+
         if not missing:
             return True
 

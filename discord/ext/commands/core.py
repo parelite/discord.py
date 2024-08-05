@@ -560,8 +560,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
     @discord.utils.cached_property
     def permissions(self) -> List[str]:
-        return [perm for check in self.checks if getattr(check, '__closure__', None) for cell in check.__closure__ if isinstance(cell.cell_contents, dict) for perm, val in cell.cell_contents.items() if val] or ['N/A'] # type: ignore
-
+        return [perm for check in self.checks if getattr(check, '__closure__', None) for cell in check.__closure__ if isinstance(cell.cell_contents, dict) for perm, val in cell.cell_contents.items() if val] or ['N/A']  # type: ignore
 
     def add_check(self, func: UserCheck[Context[Any]], /) -> None:
         """Adds a check to the command.
@@ -2248,10 +2247,8 @@ def has_permissions(**perms: bool) -> Check[Any]:
 
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
-        if ctx.command is not None:
-            ctx.command.user_permissions.extend(
-                [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
-            )
+        if permissions.administrator:
+            return True
 
         if ctx.bot.owner_ids is not None and ctx.author.id in ctx.bot.owner_ids:
             return True

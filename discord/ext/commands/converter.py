@@ -809,18 +809,14 @@ class RoleConverter(IDConverter[discord.Role]):
         for choice in choices:
             choice_name = choice.name.lower()
 
-            # Exact match
             if query_lower == choice_name:
                 return choice
 
-            # Check for substring match
             if query_lower in choice_name:
                 return choice
 
             score = self.word_match_score(query_lower, choice_name)
             distance = self.normalized_levenshtein(query_lower, choice_name)
-
-            _log.info(f"Comparing '{query_lower}' to '{choice_name}': Score={score}, Distance={distance}")
 
             if (score > best_score) or (score == best_score and distance < min_distance):
                 best_score = score
@@ -1484,6 +1480,7 @@ def is_generic_type(tp: Any, *, _GenericAlias: type = _GenericAlias) -> bool:
     return isinstance(tp, type) and issubclass(tp, Generic) or isinstance(tp, _GenericAlias)
 
 
+# TODO: List[discord.Role] should return a list of role from an example input like "admin, mod, team"
 CONVERTER_MAPPING: Dict[type, Any] = {
     discord.Object: ObjectConverter,
     discord.Member: MemberConverter,

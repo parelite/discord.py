@@ -782,6 +782,8 @@ class RoleConverter(IDConverter[discord.Role]):
         if not guild:
             raise NoPrivateMessage()
 
+        result = None
+
         if len(argument.split(',')) > 1:
             results: List[discord.Role] = []
             # Limit to a max of 25 roles to prevent abuse

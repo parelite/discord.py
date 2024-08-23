@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import datetime
 import inspect
+import logging
 import re
 from typing import (
     TYPE_CHECKING,
@@ -89,6 +90,8 @@ __all__ = (
     'Range',
     'run_converters',
 )
+
+_log = logging.getLogger(__name__)
 
 
 def _get_from_guilds(bot: _Bot, getter: str, argument: Any) -> Any:
@@ -785,7 +788,7 @@ class RoleConverter(IDConverter[discord.Role]):
     def fuzzy_search(self, query: str, choices: List[discord.Role], threshold: float = 0.5) -> Optional[discord.Role]:
         """
         Perform a fuzzy search to find the closest match to the query in a list of choices.
-        Uses substring matching, word matching, and Levenshtein distance.
+        Uses exact substring matching, word matching, and Levenshtein distance.
 
         Args:
             query (str): The search query string.
@@ -801,16 +804,19 @@ class RoleConverter(IDConverter[discord.Role]):
         best_score = -1
         min_distance = float('inf')
 
+        query_lower = query.lower()
+        
         for choice in choices:
             choice_name = choice.name.lower()
-            query_lower = query.lower()
-
+            
             if query_lower in choice_name:
                 return choice
 
             score = self.word_match_score(query_lower, choice_name)
-
+            
             distance = self.normalized_levenshtein(query_lower, choice_name)
+            
+            _log.info(f"Comparing '{query_lower}' to '{choice_name}': Score={score}, Distance={distance}")
 
             if (score > best_score) or (score == best_score and distance < min_distance):
                 best_score = score
@@ -820,7 +826,7 @@ class RoleConverter(IDConverter[discord.Role]):
         # Return None if the closest match exceeds the threshold
         if best_match is not None and min_distance <= threshold:
             return best_match
-
+        
         return None
 
     async def convert(self, ctx: Context, argument: str) -> Union[List[discord.Role], discord.Role]:

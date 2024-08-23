@@ -785,7 +785,7 @@ class RoleConverter(IDConverter[discord.Role]):
         choice_words = set(choice.lower().split())
         return len(query_words.intersection(choice_words))
 
-    def fuzzy_search(self, query: str, choices: List[discord.Role], threshold: float = 0.5) -> Optional[discord.Role]:
+    def fuzzy_search(self, query: str, choices: List[discord.Role], threshold: float = 3) -> Optional[discord.Role]:
         """
         Perform a fuzzy search to find the closest match to the query in a list of choices.
         Uses exact substring matching, word matching, and Levenshtein distance.
@@ -805,17 +805,21 @@ class RoleConverter(IDConverter[discord.Role]):
         min_distance = float('inf')
 
         query_lower = query.lower()
-        
+
         for choice in choices:
             choice_name = choice.name.lower()
-            
+
+            # Exact match
+            if query_lower == choice_name:
+                return choice
+
+            # Check for substring match
             if query_lower in choice_name:
                 return choice
 
             score = self.word_match_score(query_lower, choice_name)
-            
             distance = self.normalized_levenshtein(query_lower, choice_name)
-            
+
             _log.info(f"Comparing '{query_lower}' to '{choice_name}': Score={score}, Distance={distance}")
 
             if (score > best_score) or (score == best_score and distance < min_distance):
@@ -823,10 +827,9 @@ class RoleConverter(IDConverter[discord.Role]):
                 min_distance = distance
                 best_match = choice
 
-        # Return None if the closest match exceeds the threshold
         if best_match is not None and min_distance <= threshold:
             return best_match
-        
+
         return None
 
     async def convert(self, ctx: Context, argument: str) -> Union[List[discord.Role], discord.Role]:
@@ -859,7 +862,7 @@ class RoleConverter(IDConverter[discord.Role]):
 
         if result is None:
             # If no exact match is found, attempt a fuzzy search with ranking
-            result = self.fuzzy_search(argument, guild.roles, threshold=0.5)  # type: ignore
+            result = self.fuzzy_search(argument, guild.roles, threshold=3)  # type: ignore
 
         if result is None:
             raise RoleNotFound(argument)

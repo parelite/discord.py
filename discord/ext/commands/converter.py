@@ -717,7 +717,7 @@ class RoleConverter(IDConverter[discord.Role]):
 
     1. Lookup by ID.
     2. Lookup by mention.
-    3. Lookup by name with fuzzy search.
+    3. Lookup by name with fuzzy search and ranking.
 
     .. versionchanged:: 1.5
          Raise :exc:`.RoleNotFound` instead of generic :exc:`.BadArgument`
@@ -767,10 +767,25 @@ class RoleConverter(IDConverter[discord.Role]):
         max_len = max(len(s1), len(s2))
         return distance / max_len
 
+    def word_match_score(self, query: str, choice: str) -> int:
+        """
+        Calculate the word match score between the query and a choice.
+
+        Args:
+            query (str): The search query string.
+            choice (str): A possible match string.
+
+        Returns:
+            int: The number of words from the query that match the choice.
+        """
+        query_words = set(query.lower().split())
+        choice_words = set(choice.lower().split())
+        return len(query_words.intersection(choice_words))
+
     def fuzzy_search(self, query: str, choices: List[discord.Role], threshold: float = 0.5) -> Optional[discord.Role]:
         """
         Perform a fuzzy search to find the closest match to the query in a list of choices.
-        Uses substring matching with Levenshtein distance fallback.
+        Uses substring matching, word matching, and Levenshtein distance.
 
         Args:
             query (str): The search query string.
@@ -782,23 +797,31 @@ class RoleConverter(IDConverter[discord.Role]):
             Optional[discord.Role]: The closest match to the query from the list of choices.
                                     If no match is within the threshold, or the list is empty, returns None.
         """
+        best_match: Optional[discord.Role] = None
+        best_score = -1
         min_distance = float('inf')
-        closest_match: Optional[discord.Role] = None
 
         for choice in choices:
-            if query.lower() in choice.name.lower():
+            choice_name = choice.name.lower()
+            query_lower = query.lower()
+
+            if query_lower in choice_name:
                 return choice
 
-            distance = self.normalized_levenshtein(query.lower(), choice.name.lower())
-            if distance < min_distance:
+            score = self.word_match_score(query_lower, choice_name)
+
+            distance = self.normalized_levenshtein(query_lower, choice_name)
+
+            if (score > best_score) or (score == best_score and distance < min_distance):
+                best_score = score
                 min_distance = distance
-                closest_match = choice
+                best_match = choice
 
         # Return None if the closest match exceeds the threshold
-        if threshold is not None and min_distance > threshold:
-            return None
+        if best_match is not None and min_distance <= threshold:
+            return best_match
 
-        return closest_match
+        return None
 
     async def convert(self, ctx: Context, argument: str) -> Union[List[discord.Role], discord.Role]:
         guild = ctx.guild
@@ -829,7 +852,7 @@ class RoleConverter(IDConverter[discord.Role]):
             result = guild.get_role(int(match.group(1)))
 
         if result is None:
-            # If no exact match is found, attempt a fuzzy search
+            # If no exact match is found, attempt a fuzzy search with ranking
             result = self.fuzzy_search(argument, guild.roles, threshold=0.5)  # type: ignore
 
         if result is None:

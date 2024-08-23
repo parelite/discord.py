@@ -752,28 +752,51 @@ class RoleConverter(IDConverter[discord.Role]):
 
         return previous_row[-1]
 
-    def fuzzy_search(self, query: str, choices: List[discord.Role], threshold: int = 10) -> Optional[discord.Role]:
+    def normalized_levenshtein(self, s1: str, s2: str) -> float:
+        """
+        Calculate the normalized Levenshtein distance between two strings.
+
+        Args:
+            s1 (str): The first string.
+            s2 (str): The second string.
+
+        Returns:
+            float: The normalized Levenshtein distance between the two strings.
+        """
+        distance = self.levenshtein_distance(s1, s2)
+        max_len = max(len(s1), len(s2))
+        return distance / max_len
+
+    def fuzzy_search(self, query: str, choices: List[discord.Role], threshold: float = 0.5) -> Optional[discord.Role]:
         """
         Perform a fuzzy search to find the closest match to the query in a list of choices.
+        Uses substring matching with Levenshtein distance fallback.
 
         Args:
             query (str): The search query string.
             choices (List[discord.Role]): A list of possible matches.
-            threshold (int, optional): The maximum Levenshtein distance allowed for a match.
-                                    If the best match exceeds this distance, return None.
+            threshold (float, optional): The maximum normalized Levenshtein distance allowed for a match.
+                                         If the best match exceeds this distance, return None.
 
         Returns:
-            Optional[str]: The closest match to the query from the list of choices.
-                        If no match is within the threshold, or the list is empty, returns None.
+            Optional[discord.Role]: The closest match to the query from the list of choices.
+                                    If no match is within the threshold, or the list is empty, returns None.
         """
         min_distance = float('inf')
         closest_match: Optional[discord.Role] = None
 
         for choice in choices:
-            distance = self.levenshtein_distance(query.lower(), choice.name.lower())
-            if distance < min_distance and distance <= threshold:
+            if query.lower() in choice.name.lower():
+                return choice
+
+            distance = self.normalized_levenshtein(query.lower(), choice.name.lower())
+            if distance < min_distance:
                 min_distance = distance
                 closest_match = choice
+
+        # Return None if the closest match exceeds the threshold
+        if threshold is not None and min_distance > threshold:
+            return None
 
         return closest_match
 
@@ -807,7 +830,7 @@ class RoleConverter(IDConverter[discord.Role]):
 
         if result is None:
             # If no exact match is found, attempt a fuzzy search
-            result = self.fuzzy_search(argument, guild.roles, threshold=10)  # type: ignore
+            result = self.fuzzy_search(argument, guild.roles, threshold=0.5)  # type: ignore
 
         if result is None:
             raise RoleNotFound(argument)

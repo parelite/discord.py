@@ -428,10 +428,10 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
         self.brief: Optional[str] = kwargs.get('brief')
         self.usage: Optional[str] = kwargs.get('usage')
-        self.example: Optional[str] = kwargs.get('example')
         self.rest_is_raw: bool = kwargs.get('rest_is_raw', False)
         self.aliases: Union[List[str], Tuple[str]] = kwargs.get('aliases', [])
         self.extras: Dict[Any, Any] = kwargs.get('extras', {})
+        self.example: Optional[str] = kwargs.get('example')
 
         self._flag: Optional[FlagConverter] = kwargs.get('flag')
 

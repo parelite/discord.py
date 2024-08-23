@@ -802,16 +802,6 @@ class RoleConverter(IDConverter[discord.Role]):
         match = self._get_id_match(argument) or re.match(r'<@&([0-9]{15,20})>$', argument)
         if match:
             result = guild.get_role(int(match.group(1)))
-        else:
-            await guild.fetch_roles()
-            result = next(
-                (
-                    role
-                    for role in sorted(guild.roles, key=lambda role: role.position, reverse=True)
-                    if argument.lower() in role.name.lower()
-                ),
-                None,
-            )
 
         if result is None:
             # If no exact match is found, attempt a fuzzy search

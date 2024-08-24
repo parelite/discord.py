@@ -882,8 +882,7 @@ class RolesConverter(IDConverter[List[discord.Role]]):
             raise RoleNotFound(argument)
 
         return results
-
-
+      
 class TimeDeltaConverter(Converter[datetime.timedelta]):
     """Converts to a :class:`~datetime.timedelta`.
 
@@ -1498,6 +1497,7 @@ def is_generic_type(tp: Any, *, _GenericAlias: type = _GenericAlias) -> bool:
     return isinstance(tp, type) and issubclass(tp, Generic) or isinstance(tp, _GenericAlias)
 
 
+# TODO: List[discord.Role] should return a list of role from an example input like "admin, mod, team"
 CONVERTER_MAPPING: Dict[type, Any] = {
     discord.Object: ObjectConverter,
     discord.Member: MemberConverter,

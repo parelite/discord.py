@@ -1651,11 +1651,7 @@ async def run_converters(ctx: Context[BotT], converter: Any, argument: str, para
 
         raise BadLiteralArgument(param, literal_args, errors, argument)
 
-    if origin is not None and is_generic_type(converter):
-        mapped_converter = CONVERTER_MAPPING.get(converter)
-        if not mapped_converter:
-            converter = origin
-        else:
-            converter = mapped_converter
+    if origin and is_generic_type(converter):
+        converter = CONVERTER_MAPPING.get(converter, origin)
 
     return await _actual_conversion(ctx, converter, argument, param)

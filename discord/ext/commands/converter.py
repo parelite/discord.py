@@ -1615,9 +1615,6 @@ async def run_converters(ctx: Context[BotT], converter: Any, argument: str, para
         _NoneType = type(None)
         union_args = converter.__args__
         for conv in union_args:
-            # if we got to this part in the code, then the previous conversions have failed
-            # so we should just undo the view, return the default, and allow parsing to continue
-            # with the other parameters
             if conv is _NoneType and param.kind != param.VAR_POSITIONAL:
                 ctx.view.undo()
                 return None if param.required else await param.get_default(ctx)
@@ -1629,7 +1626,6 @@ async def run_converters(ctx: Context[BotT], converter: Any, argument: str, para
             else:
                 return value
 
-        # if we're here, then we failed all the converters
         raise BadUnionArgument(param, union_args, errors)
 
     if origin is Literal:
@@ -1653,14 +1649,13 @@ async def run_converters(ctx: Context[BotT], converter: Any, argument: str, para
             if value == literal:
                 return value
 
-        # if we're here, then we failed to match all the literals
         raise BadLiteralArgument(param, literal_args, errors, argument)
 
-    # This must be the last if-clause in the chain of origin checking
-    # Nearly every type is a generic type within the typing library
-    # So care must be taken to make sure a more specialised origin handle
-    # isn't overwritten by the widest if clause
     if origin is not None and is_generic_type(converter):
-        converter = origin
+        mapped_converter = CONVERTER_MAPPING.get(converter)
+        if not mapped_converter:
+            converter = origin
+        else:
+            converter = mapped_converter
 
     return await _actual_conversion(ctx, converter, argument, param)

@@ -44,6 +44,8 @@ from typing import (
     TypeVar,
     Union,
     runtime_checkable,
+    get_origin,
+    get_args,
 )
 import types
 
@@ -711,7 +713,7 @@ ColorConverter = ColourConverter
 
 
 class RoleConverter(IDConverter[discord.Role]):
-    """Converts to a :class:`~Union[discord.Role, List[discord.Role]]`.
+    """Converts to a :class:`~discord.Role`.
 
     All lookups are via the local guild. If in a DM context, the converter raises
     :exc:`.NoPrivateMessage` exception.
@@ -740,7 +742,7 @@ class RoleConverter(IDConverter[discord.Role]):
         if len(s1) < len(s2):
             return self.levenshtein_distance(s2, s1)
 
-        if len(s2) == 0:
+        if not s2:
             return len(s1)
 
         previous_row = range(len(s2) + 1)
@@ -835,23 +837,6 @@ class RoleConverter(IDConverter[discord.Role]):
 
         result = None
 
-        if len(argument.split(',')) > 1:
-            results: List[discord.Role] = []
-            # Limit to a max of 25 roles to prevent abuse
-            for arg in argument.split(',')[:25]:
-                role = await self.convert(ctx, arg.strip())
-
-                assert isinstance(role, discord.Role), "Role must be a discord.Role instance."
-                results.append(role)
-
-            if not results:
-                raise RoleNotFound(argument)
-
-            if len(results) == 1:
-                return results[0]
-
-            return results
-
         match = self._get_id_match(argument) or re.match(r'<@&([0-9]{15,20})>$', argument)
         if match:
             result = guild.get_role(int(match.group(1)))
@@ -866,6 +851,38 @@ class RoleConverter(IDConverter[discord.Role]):
         return result
 
 
+class RolesConverter(IDConverter[List[discord.Role]]):
+    """Converts to a :class:`~List[discord.Role]`.
+
+    All lookups are via the local guild. If in a DM context, the converter raises
+    :exc:`.NoPrivateMessage` exception.
+
+    The lookup strategy is as follows (in order):
+
+    1. Lookup by ID.
+    2. Lookup by mention.
+    3. Lookup by name with fuzzy search and ranking.
+
+    .. versionchanged:: 1.5
+         Raise :exc:`.RoleNotFound` instead of generic :exc:`.BadArgument`
+    """
+
+    async def convert(self, ctx: Context, argument: str) -> List[discord.Role]:
+        guild = ctx.guild
+        if not guild:
+            raise NoPrivateMessage()
+
+        results: List[discord.Role] = []
+        for arg in argument.split(','):
+            role = await RoleConverter().convert(ctx, arg.strip())
+            assert isinstance(role, discord.Role), "Role must be a discord.Role instance."
+            results.append(role)
+
+        if not results:
+            raise RoleNotFound(argument)
+
+        return results
+      
 class TimeDeltaConverter(Converter[datetime.timedelta]):
     """Converts to a :class:`~datetime.timedelta`.
 
@@ -1504,6 +1521,7 @@ CONVERTER_MAPPING: Dict[type, Any] = {
     discord.GuildSticker: GuildStickerConverter,
     discord.ScheduledEvent: ScheduledEventConverter,
     discord.ForumChannel: ForumChannelConverter,
+    List[discord.Role]: RolesConverter,
 }
 
 
@@ -1519,7 +1537,12 @@ async def _actual_conversion(ctx: Context[BotT], converter: Any, argument: str, 
         if module is not None and (module.startswith('discord.') and not module.endswith('converter')):
             converter = CONVERTER_MAPPING.get(converter, converter)
 
+    origin = get_origin(converter)
+    if origin and (mapped_converter := CONVERTER_MAPPING.get(converter)):
+        converter = mapped_converter
+
     try:
+
         if inspect.isclass(converter) and issubclass(converter, Converter):
             if inspect.ismethod(converter.convert):
                 return await converter.convert(ctx, argument)
@@ -1592,9 +1615,6 @@ async def run_converters(ctx: Context[BotT], converter: Any, argument: str, para
         _NoneType = type(None)
         union_args = converter.__args__
         for conv in union_args:
-            # if we got to this part in the code, then the previous conversions have failed
-            # so we should just undo the view, return the default, and allow parsing to continue
-            # with the other parameters
             if conv is _NoneType and param.kind != param.VAR_POSITIONAL:
                 ctx.view.undo()
                 return None if param.required else await param.get_default(ctx)
@@ -1606,7 +1626,6 @@ async def run_converters(ctx: Context[BotT], converter: Any, argument: str, para
             else:
                 return value
 
-        # if we're here, then we failed all the converters
         raise BadUnionArgument(param, union_args, errors)
 
     if origin is Literal:
@@ -1630,14 +1649,9 @@ async def run_converters(ctx: Context[BotT], converter: Any, argument: str, para
             if value == literal:
                 return value
 
-        # if we're here, then we failed to match all the literals
         raise BadLiteralArgument(param, literal_args, errors, argument)
 
-    # This must be the last if-clause in the chain of origin checking
-    # Nearly every type is a generic type within the typing library
-    # So care must be taken to make sure a more specialised origin handle
-    # isn't overwritten by the widest if clause
-    if origin is not None and is_generic_type(converter):
-        converter = origin
+    if origin and is_generic_type(converter):
+        converter = CONVERTER_MAPPING.get(converter, origin)
 
     return await _actual_conversion(ctx, converter, argument, param)

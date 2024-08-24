@@ -44,6 +44,8 @@ from typing import (
     TypeVar,
     Union,
     runtime_checkable,
+    get_origin,
+    get_args,
 )
 import types
 
@@ -1519,7 +1521,7 @@ CONVERTER_MAPPING: Dict[type, Any] = {
     discord.GuildSticker: GuildStickerConverter,
     discord.ScheduledEvent: ScheduledEventConverter,
     discord.ForumChannel: ForumChannelConverter,
-    List[discord.Role]: RolesConverter
+    List[discord.Role]: RolesConverter,
 }
 
 
@@ -1535,7 +1537,12 @@ async def _actual_conversion(ctx: Context[BotT], converter: Any, argument: str, 
         if module is not None and (module.startswith('discord.') and not module.endswith('converter')):
             converter = CONVERTER_MAPPING.get(converter, converter)
 
+    origin = get_origin(converter)
+    if origin and (mapped_converter := CONVERTER_MAPPING.get(converter)):
+        converter = mapped_converter
+
     try:
+
         if inspect.isclass(converter) and issubclass(converter, Converter):
             if inspect.ismethod(converter.convert):
                 return await converter.convert(ctx, argument)

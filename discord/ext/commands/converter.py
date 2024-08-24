@@ -711,7 +711,7 @@ ColorConverter = ColourConverter
 
 
 class RoleConverter(IDConverter[discord.Role]):
-    """Converts to a :class:`~Union[discord.Role, List[discord.Role]]`.
+    """Converts to a :class:`~discord.Role`.
 
     All lookups are via the local guild. If in a DM context, the converter raises
     :exc:`.NoPrivateMessage` exception.
@@ -740,7 +740,7 @@ class RoleConverter(IDConverter[discord.Role]):
         if len(s1) < len(s2):
             return self.levenshtein_distance(s2, s1)
 
-        if len(s2) == 0:
+        if not s2:
             return len(s1)
 
         previous_row = range(len(s2) + 1)
@@ -835,23 +835,6 @@ class RoleConverter(IDConverter[discord.Role]):
 
         result = None
 
-        if len(argument.split(',')) > 1:
-            results: List[discord.Role] = []
-            # Limit to a max of 25 roles to prevent abuse
-            for arg in argument.split(',')[:25]:
-                role = await self.convert(ctx, arg.strip())
-
-                assert isinstance(role, discord.Role), "Role must be a discord.Role instance."
-                results.append(role)
-
-            if not results:
-                raise RoleNotFound(argument)
-
-            if len(results) == 1:
-                return results[0]
-
-            return results
-
         match = self._get_id_match(argument) or re.match(r'<@&([0-9]{15,20})>$', argument)
         if match:
             result = guild.get_role(int(match.group(1)))
@@ -864,6 +847,39 @@ class RoleConverter(IDConverter[discord.Role]):
             raise RoleNotFound(argument)
 
         return result
+
+
+class RolesConverter(IDConverter[List[discord.Role]]):
+    """Converts to a :class:`~List[discord.Role]`.
+
+    All lookups are via the local guild. If in a DM context, the converter raises
+    :exc:`.NoPrivateMessage` exception.
+
+    The lookup strategy is as follows (in order):
+
+    1. Lookup by ID.
+    2. Lookup by mention.
+    3. Lookup by name with fuzzy search and ranking.
+
+    .. versionchanged:: 1.5
+         Raise :exc:`.RoleNotFound` instead of generic :exc:`.BadArgument`
+    """
+
+    async def convert(self, ctx: Context, argument: str) -> List[discord.Role]:
+        guild = ctx.guild
+        if not guild:
+            raise NoPrivateMessage()
+
+        results: List[discord.Role] = []
+        for arg in argument.split(','):
+            role = await RoleConverter().convert(ctx, arg.strip())
+            assert isinstance(role, discord.Role), "Role must be a discord.Role instance."
+            results.append(role)
+
+        if not results:
+            raise RoleNotFound(argument)
+
+        return results
 
 
 class TimeDeltaConverter(Converter[datetime.timedelta]):
@@ -1480,7 +1496,6 @@ def is_generic_type(tp: Any, *, _GenericAlias: type = _GenericAlias) -> bool:
     return isinstance(tp, type) and issubclass(tp, Generic) or isinstance(tp, _GenericAlias)
 
 
-# TODO: List[discord.Role] should return a list of role from an example input like "admin, mod, team"
 CONVERTER_MAPPING: Dict[type, Any] = {
     discord.Object: ObjectConverter,
     discord.Member: MemberConverter,
@@ -1504,6 +1519,7 @@ CONVERTER_MAPPING: Dict[type, Any] = {
     discord.GuildSticker: GuildStickerConverter,
     discord.ScheduledEvent: ScheduledEventConverter,
     discord.ForumChannel: ForumChannelConverter,
+    List[discord.Role]: RolesConverter
 }
 
 

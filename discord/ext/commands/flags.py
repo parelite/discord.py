@@ -28,7 +28,24 @@ import inspect
 import re
 import sys
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Literal, Optional, Pattern, Set, Tuple, Type, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    get_origin,
+    get_args,
+    get_type_hints,
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Literal,
+    Optional,
+    Pattern,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 
 from discord.utils import MISSING, maybe_coroutine, resolve_annotation
 
@@ -686,7 +703,7 @@ class MetaFlags(type):
         attrs['__commands_flags__'] = {}
 
         for attr_name, attr_value in attrs.items():
-            if isinstance(attr_value, (bool, int, str)):
+            if not attr_name.startswith('__'):
                 attrs['__commands_flags__'][attr_name] = attr_value
 
         attrs['__case_insensitive__'] = case_insensitive
@@ -717,7 +734,7 @@ class BasicFlags(metaclass=MetaFlags):
         case_insensitive = getattr(cls, '__case_insensitive__', False)
         flags = cls.get_flags()
 
-        flag_pattern = re.compile(r'--(\w+)(?:=(\S+))?')
+        flag_pattern = re.compile(r'--(\w+)(?: (\S+))?')
 
         for match in flag_pattern.finditer(argument):
             flag_name, flag_value = match.groups()
@@ -727,33 +744,19 @@ class BasicFlags(metaclass=MetaFlags):
             if flag_name not in flags:
                 raise TypeError(f"Unknown flag `{flag_name}`.")
 
-            expected_type = type(flags[flag_name])
+            if not flag_value:
+                continue
 
-            if hasattr(expected_type, '__origin__') and expected_type.__origin__ is Union:
-                expected_types = expected_type.__args__
-            elif expected_type.__class__ is type(Optional):
-                expected_types = [expected_type.__args__[0]]
-            else:
-                expected_types = [expected_type]
+            _type = (
+                get_args(cls.__annotations__[flag_name])[0]
+                if get_origin(cls.__annotations__[flag_name]) is Union
+                else cls.__annotations__[flag_name]
+            )
 
-            if flag_value is None:
-                if any(typ is type(None) for typ in expected_types):
-                    result[flag_name] = None
-                elif expected_types[0] is bool:
-                    result[flag_name] = True
-                else:
-                    if expected_type.__class__ is type(Optional):
-                        if expected_type.__args__[0] is int:
-                            result[flag_name] = None
-                        else:
-                            result[flag_name] = True
-                    else:
-                        result[flag_name] = True
-            else:
-                for expected_type in expected_types:
-                    result[flag_name] = expected_type(flag_value)
-                else:
-                    raise TypeError(f"Cannot convert flag `{flag_name}` to any type in {expected_type}")
+            try:
+                result[flag_name] = _type(flag_value)
+            except:
+                raise TypeError(f"You inputted an invalid type for the **flag** `{flag_name}`.")
 
         for flag_name, default_value in flags.items():
             if flag_name not in result:

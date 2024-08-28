@@ -725,35 +725,36 @@ class BasicFlags(metaclass=MetaFlags):
                 flag_name = flag_name.lower()
 
             if flag_name not in flags:
-                raise TypeError(f"Unknown flag '{flag_name}'.")
+                raise TypeError(f"Unknown flag `{flag_name}`.")
 
             expected_type = type(flags[flag_name])
 
+            if hasattr(expected_type, '__origin__') and expected_type.__origin__ is Union:
+                expected_types = expected_type.__args__
+            elif expected_type.__class__ is type(Optional):
+                expected_types = [expected_type.__args__[0]]
+            else:
+                expected_types = [expected_type]
+
             if flag_value is None:
-                if hasattr(expected_type, '__origin__') and expected_type.__origin__ is Union:
-                    result[flag_name] = None if type(None) in expected_type.__args__ else True
-                elif expected_type is bool:
+                if any(typ is type(None) for typ in expected_types):
+                    result[flag_name] = None
+                elif expected_types[0] is bool:
                     result[flag_name] = True
                 else:
                     result[flag_name] = True
             else:
-                try:
-                    if hasattr(expected_type, '__origin__') and expected_type.__origin__ is Union:
-                        for typ in expected_type.__args__:
-                            if typ is type(None) and flag_value == 'None':
-                                result[flag_name] = None
-                                break
-                            try:
-                                result[flag_name] = type(flag_value)
-                                break
-                            except (ValueError, TypeError):
-                                continue
+                for expected_type in expected_types:
+                    try:
+                        if expected_type is bool:
+                            result[flag_name] = flag_value.lower() == 'true'
                         else:
-                            raise TypeError(f"Cannot convert flag '{flag_name}' to any type in {expected_type}")
-                    else:
-                        result[flag_name] = expected_type(flag_value)
-                except (ValueError, TypeError):
-                    raise TypeError(f"Cannot convert flag '{flag_name}' to {expected_type.__name__}")
+                            result[flag_name] = expected_type(flag_value)
+                        break
+                    except (ValueError, TypeError):
+                        continue
+                else:
+                    raise TypeError(f"Cannot convert flag `{flag_name}` to any type in {expected_type}")
 
         for flag_name, default_value in flags.items():
             if flag_name not in result:

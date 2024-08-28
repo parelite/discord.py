@@ -713,7 +713,7 @@ class BasicFlags(metaclass=MetaFlags):
     @classmethod
     def parse_flags(cls, argument: str) -> Dict[str, Any]:
         """Parse the argument string to extract flag values."""
-        result = {}
+        result: Dict[str, Any] = {}
         case_insensitive = getattr(cls, '__case_insensitive__', False)
         flags = cls.get_flags()
 
@@ -725,13 +725,39 @@ class BasicFlags(metaclass=MetaFlags):
                 flag_name = flag_name.lower()
 
             if flag_name in flags:
-                flag_type = type(flags[flag_name])
+                expected_type = type(flags[flag_name])
+                converted_value = None
+
                 if flag_value is not None:
-                    result[flag_name] = flag_type(flag_value)
+                    if hasattr(expected_type, '__origin__') and expected_type.__origin__ is Union:
+                        for typ in expected_type.__args__:
+                            try:
+                                if typ is type(None):
+                                    continue
+                                converted_value = typ(flag_value)
+                                break
+                            except (ValueError, TypeError):
+                                continue
+                        if converted_value is None:
+                            raise ValueError(f"Cannot convert flag '{flag_name}' to any type in {expected_type}")
+                    else:
+                        try:
+                            converted_value = expected_type(flag_value)
+                        except (ValueError, TypeError):
+                            raise ValueError(f"Cannot convert flag '{flag_name}' to {expected_type.__name__}")
                 else:
-                    result[flag_name] = True
+                    if expected_type is Optional[bool]:
+                        converted_value = None
+                    else:
+                        converted_value = True
+
+                result[flag_name] = converted_value
             else:
                 raise ValueError(f"Unknown flag: {flag_name}")
+
+        for flag_name, default_value in flags.items():
+            if flag_name not in result:
+                result[flag_name] = default_value
 
         return result
 

@@ -1357,6 +1357,7 @@ class BotBase(GroupMixin[None]):
     async def handle_command_flags(self, ctx: Context[BotT]):
         """Handle command flags and remove them from message content."""
         if ctx.command and ctx.command._flag:
+            print("FLAGS ARE NOT NONE")
             flag_instance = await ctx.command._flag.convert(ctx, ctx.message.content)
 
             flags = {f'--{name} {value}' if value else f'--{name}' for name, value in flag_instance}

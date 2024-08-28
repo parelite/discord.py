@@ -645,6 +645,12 @@ class FlagConverter(metaclass=FlagsMeta):
                         setattr(self, flag.attribute, flag.default)
                     continue
 
+            if flag.no_value:
+                if flag.name in arguments:
+                    setattr(self, flag.attribute, True)
+                else:
+                    setattr(self, flag.attribute, False)
+
             if flag.max_args > 0 and len(values) > flag.max_args:
                 if flag.override:
                     values = values[-flag.max_args :]
@@ -668,12 +674,5 @@ class FlagConverter(metaclass=FlagsMeta):
                 values = dict(values)
 
             setattr(self, flag.attribute, values)
-
-        for flag in flags.values():
-            if flag.no_value:
-                if flag.name in arguments:
-                    setattr(self, flag.attribute, True)
-                else:
-                    setattr(self, flag.attribute, False)
 
         return self

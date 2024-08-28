@@ -81,6 +81,7 @@ class Flag:
         used as application commands.
     positional: :class:`bool`
         Whether the flag is positional or not. There can only be one positional flag.
+    no_value: :class:`bool`
 
         .. versionadded:: 2.4
     """
@@ -95,6 +96,7 @@ class Flag:
     description: str = MISSING
     positional: bool = MISSING
     cast_to_dict: bool = False
+    no_value: bool = False
 
     @property
     def required(self) -> bool:
@@ -666,5 +668,12 @@ class FlagConverter(metaclass=FlagsMeta):
                 values = dict(values)
 
             setattr(self, flag.attribute, values)
+
+        for flag in flags.values():
+            if flag.no_value:
+                if flag.name in arguments:
+                    setattr(self, flag.attribute, True)
+                else:
+                    setattr(self, flag.attribute, False)
 
         return self

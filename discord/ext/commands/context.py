@@ -28,7 +28,7 @@ import re
 from typing import TYPE_CHECKING, Any, Dict, Generator, Generic, List, Optional, TypeVar, Union, Sequence, Type, overload
 
 import discord.abc
-from discord.ext.commands.flags import BasicFlags, FlagConverter
+from discord.ext.commands.flags import BasicFlags
 import discord.utils
 from discord import Interaction, Message, Attachment, MessageType, User, PartialMessageable, Permissions, ChannelType, Thread
 from discord.context_managers import Typing

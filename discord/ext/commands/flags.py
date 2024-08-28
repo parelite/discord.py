@@ -687,6 +687,7 @@ class MetaFlags(type):
         *,
         case_insensitive: bool = False,
     ) -> MetaFlags:
+        attrs['__commands_flags__'] = {}
 
         for attr_name, attr_value in attrs.items():
             if isinstance(attr_value, (bool, int, str)):

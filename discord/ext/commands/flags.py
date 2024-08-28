@@ -96,8 +96,7 @@ class Flag:
     description: str = MISSING
     positional: bool = MISSING
     cast_to_dict: bool = False
-    no_value: bool = False
-    exists: bool = False
+    no_value: bool = True
 
     @property
     def required(self) -> bool:
@@ -646,9 +645,6 @@ class FlagConverter(metaclass=FlagsMeta):
                         setattr(self, flag.attribute, flag.default)
                     continue
 
-            if flag.no_value and flag.name in arguments:
-                flag.exists = True
-
             if flag.max_args > 0 and len(values) > flag.max_args:
                 if flag.override:
                     values = values[-flag.max_args :]
@@ -671,6 +667,9 @@ class FlagConverter(metaclass=FlagsMeta):
             if flag.cast_to_dict:
                 values = dict(values)
 
-            setattr(self, flag.attribute, values)
+            if flag.no_value:
+                setattr(self, flag.attribute, True)
+            else:
+                setattr(self, flag.attribute, values)
 
         return self

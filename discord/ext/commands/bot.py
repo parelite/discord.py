@@ -324,7 +324,7 @@ class BotBase(GroupMixin[None]):
             return result
 
         return decorator
-    
+
     async def load_cogs_from_dir(self, path: str):
         """Recursively Load all cogs from directories and subdirectories."""
         for file in glob.glob(f'{path}/**/*.py', recursive=True):
@@ -1346,7 +1346,7 @@ class BotBase(GroupMixin[None]):
 
         if self.strip_after_prefix:
             view.skip_ws()
-        
+
         invoker = view.get_word()
         ctx.invoked_with = invoker
         # type-checker fails to narrow invoked_prefix type.
@@ -1355,7 +1355,7 @@ class BotBase(GroupMixin[None]):
         return ctx
 
     async def handle_command_flags(self, ctx: Context[BotT]):
-        """ Handle command flags, replace message content to remove any present flags.
+        """Handle command flags, replace message content to remove any present flags.
 
         Args:
             ctx: :class:`.Context`
@@ -1365,7 +1365,7 @@ class BotBase(GroupMixin[None]):
             ctx.flag = await ctx.command._flag.convert(ctx, ctx.message.content)
             for name, value in ctx.flag:
                 ctx.message.content = ctx.message.content.strip().replace(f'--{name} {value}', '').replace(f'--{name}', '')
-            
+
     async def invoke(self, ctx: Context[BotT], /) -> None:
         """|coro|
 

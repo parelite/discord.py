@@ -726,32 +726,41 @@ class BasicFlags(metaclass=MetaFlags):
 
             if flag_name in flags:
                 expected_type = type(flags[flag_name])
-                converted_value = None
 
                 if flag_value is not None:
-                    if hasattr(expected_type, '__origin__') and expected_type.__origin__ is Union:
-                        for typ in expected_type.__args__:
-                            try:
+                    if hasattr(expected_type, '__origin__'):
+                        if expected_type.__origin__ is Union:
+                            for typ in expected_type.__args__:
                                 if typ is type(None):
                                     continue
-                                converted_value = typ(flag_value)
-                                break
+                                try:
+                                    converted_value = typ(flag_value)
+                                    result[flag_name] = converted_value
+                                    break
+                                except (ValueError, TypeError):
+                                    continue
+                            else:
+                                raise TypeError(f"Cannot convert flag '{flag_name}' to any type in {expected_type}")
+                        else:
+                            try:
+                                if expected_type is Optional[bool] and flag_value == 'None':
+                                    result[flag_name] = None
+                                else:
+                                    result[flag_name] = expected_type(flag_value)
                             except (ValueError, TypeError):
-                                continue
-                        if converted_value is None:
-                            raise TypeError(f"Cannot convert flag '{flag_name}' to any type in {expected_type}")
+                                raise TypeError(f"Cannot convert flag '{flag_name}' to {expected_type.__name__}")
                     else:
                         try:
-                            converted_value = expected_type(flag_value)
+                            result[flag_name] = expected_type(flag_value)
                         except (ValueError, TypeError):
                             raise TypeError(f"Cannot convert flag '{flag_name}' to {expected_type.__name__}")
+
                 else:
                     if expected_type is Optional[bool]:
-                        converted_value = None
+                        result[flag_name] = None
                     else:
-                        converted_value = True
+                        result[flag_name] = True
 
-                result[flag_name] = converted_value
             else:
                 raise TypeError(f"Unknown flag `{flag_name}` or incorrect data type inserted.")
 

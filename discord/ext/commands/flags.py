@@ -724,67 +724,37 @@ class BasicFlags(metaclass=MetaFlags):
             if case_insensitive:
                 flag_name = flag_name.lower()
 
-            if flag_name in flags:
-                expected_type = type(flags[flag_name])
-                converted_value = None
-
-                if flag_value is not None:
-                    if hasattr(expected_type, '__origin__'):
-                        if expected_type.__origin__ is Union:
-                            for typ in expected_type.__args__:
-                                if typ is type(None):
-                                    continue
-                                try:
-                                    converted_value = typ(flag_value)
-                                    break
-                                except (ValueError, TypeError):
-                                    continue
-                            if converted_value is None:
-                                raise TypeError(f"Cannot convert flag '{flag_name}' to any type in {expected_type}")
-                        else:
-                            try:
-                                if expected_type.__origin__ is Union and type(None) in expected_type.__args__:
-                                    if flag_value == 'None':
-                                        converted_value = None
-                                    else:
-                                        for typ in expected_type.__args__:
-                                            if typ is type(None):
-                                                continue
-                                            try:
-                                                converted_value = typ(flag_value)
-                                                break
-                                            except (ValueError, TypeError):
-                                                continue
-                                        if converted_value is None:
-                                            raise TypeError(
-                                                f"Cannot convert flag '{flag_name}' to any type in {expected_type}"
-                                            )
-                                else:
-                                    converted_value = expected_type(flag_value)
-                            except (ValueError, TypeError):
-                                raise TypeError(f"Cannot convert flag '{flag_name}' to {expected_type.__name__}")
-                    else:
-                        try:
-                            converted_value = expected_type(flag_value)
-                        except (ValueError, TypeError):
-                            raise TypeError(f"Cannot convert flag '{flag_name}' to {expected_type.__name__}")
-
-                else:
-                    if hasattr(expected_type, '__origin__') and expected_type.__origin__ is Union:
-                        if type(None) in expected_type.__args__:
-                            converted_value = None
-                        else:
-                            converted_value = True
-                    elif expected_type is bool:
-                        converted_value = True
-                    else:
-                        converted_value = True
-
-                result[flag_name] = converted_value
-            else:
+            if flag_name not in flags:
                 raise TypeError(f"Unknown flag '{flag_name}'.")
 
-        # Ensure all flags are present with default values
+            expected_type = type(flags[flag_name])
+
+            if flag_value is None:
+                if hasattr(expected_type, '__origin__') and expected_type.__origin__ is Union:
+                    result[flag_name] = None if type(None) in expected_type.__args__ else True
+                elif expected_type is bool:
+                    result[flag_name] = True
+                else:
+                    result[flag_name] = True
+            else:
+                try:
+                    if hasattr(expected_type, '__origin__') and expected_type.__origin__ is Union:
+                        for typ in expected_type.__args__:
+                            if typ is type(None) and flag_value == 'None':
+                                result[flag_name] = None
+                                break
+                            try:
+                                result[flag_name] = type(flag_value)
+                                break
+                            except (ValueError, TypeError):
+                                continue
+                        else:
+                            raise TypeError(f"Cannot convert flag '{flag_name}' to any type in {expected_type}")
+                    else:
+                        result[flag_name] = expected_type(flag_value)
+                except (ValueError, TypeError):
+                    raise TypeError(f"Cannot convert flag '{flag_name}' to {expected_type.__name__}")
+
         for flag_name, default_value in flags.items():
             if flag_name not in result:
                 result[flag_name] = default_value

@@ -51,11 +51,11 @@ from typing import (
 import re
 
 import discord
-from discord.ext.commands import BasicFlags
 
 from ._types import _BaseCommand, CogT
 from .cog import Cog
 from .context import Context
+from .flags import BasicFlags
 from .converter import Greedy, run_converters
 from .cooldowns import BucketType, Cooldown, CooldownMapping, DynamicCooldownMapping, MaxConcurrency
 from .errors import *

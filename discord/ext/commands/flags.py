@@ -742,7 +742,10 @@ class BasicFlags(metaclass=MetaFlags):
                 elif expected_types[0] is bool:
                     result[flag_name] = True
                 else:
-                    result[flag_name] = True
+                    if expected_type.__class__ is type(Optional):
+                        result[flag_name] = None
+                    else:
+                        result[flag_name] = True
             else:
                 for expected_type in expected_types:
                     try:

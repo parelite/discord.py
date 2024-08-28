@@ -739,12 +739,12 @@ class BasicFlags(metaclass=MetaFlags):
                             except (ValueError, TypeError):
                                 continue
                         if converted_value is None:
-                            raise ValueError(f"Cannot convert flag '{flag_name}' to any type in {expected_type}")
+                            raise TypeError(f"Cannot convert flag '{flag_name}' to any type in {expected_type}")
                     else:
                         try:
                             converted_value = expected_type(flag_value)
                         except (ValueError, TypeError):
-                            raise ValueError(f"Cannot convert flag '{flag_name}' to {expected_type.__name__}")
+                            raise TypeError(f"Cannot convert flag '{flag_name}' to {expected_type.__name__}")
                 else:
                     if expected_type is Optional[bool]:
                         converted_value = None
@@ -753,7 +753,7 @@ class BasicFlags(metaclass=MetaFlags):
 
                 result[flag_name] = converted_value
             else:
-                raise ValueError(f"Unknown flag: {flag_name}")
+                raise TypeError(f"Couldn't convert flag `{flag_name}` to correct data type.")
 
         for flag_name, default_value in flags.items():
             if flag_name not in result:

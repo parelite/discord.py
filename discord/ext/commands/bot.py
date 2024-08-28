@@ -1380,9 +1380,9 @@ class BotBase(GroupMixin[None]):
         """
         if ctx.command is not None:
             self.dispatch('command', ctx)
-            await self.handle_command_flags(ctx)
             try:
                 if await self.can_run(ctx, call_once=True):
+                    await self.handle_command_flags(ctx)
                     await ctx.command.invoke(ctx)
                 else:
                     raise errors.CheckFailure('The global check once functions failed.')

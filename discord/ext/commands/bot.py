@@ -1355,16 +1355,12 @@ class BotBase(GroupMixin[None]):
         return ctx
 
     async def handle_command_flags(self, ctx: Context[BotT]):
-        """Handle command flags, replace message content to remove any present flags.
+        """Handle command flags and remove them from message content."""
+        if ctx.command and ctx.command._flag:
+            flag_instance = await ctx.command._flag.convert(ctx, ctx.message.content)
 
-        Args:
-            ctx: :class:`.Context`
-                The invocation context to handle flags for.
-        """
-        if ctx.command is not None and ctx.command._flag is not None:
-            ctx.flag = await ctx.command._flag.convert(ctx, ctx.message.content)
-            for name, value in ctx.flag:
-                ctx.message.content = ctx.message.content.strip().replace(f'--{name} {value}', '').replace(f'--{name}', '')
+            flags = {f'--{name} {value}' if value else f'--{name}' for name, value in flag_instance}
+            ctx.message.content = ' '.join(part for part in ctx.message.content.split() if part not in flags)
 
     async def invoke(self, ctx: Context[BotT], /) -> None:
         """|coro|

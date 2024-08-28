@@ -36,11 +36,7 @@ from .converter import run_converters
 from .errors import BadFlagArgument, MissingFlagArgument, MissingRequiredFlag, TooManyFlags, TooManyArguments
 from .view import StringView
 
-__all__ = (
-    'Flag',
-    'flag',
-    'FlagConverter',
-)
+__all__ = ('Flag', 'flag', 'FlagConverter', 'BasicFlags')
 
 
 if TYPE_CHECKING:

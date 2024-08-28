@@ -198,7 +198,7 @@ class Context(discord.abc.Messageable, Generic[BotT]):
         self.message: Message = message
         self.bot: BotT = bot
         self.args: List[Any] = args or []
-        self.flag: Optional[BasicFlags] = None
+        self.flag: Optional[Type[BasicFlags]] = None
         self.kwargs: Dict[str, Any] = kwargs or {}
         self.prefix: Optional[str] = prefix
         self.command: Optional[Command[Any, ..., Any]] = command

@@ -51,7 +51,7 @@ from typing import (
 import re
 
 import discord
-from discord.ext.commands.flags import BasicFlags, FlagConverter
+from discord.ext.commands import BasicFlags
 
 from ._types import _BaseCommand, CogT
 from .cog import Cog

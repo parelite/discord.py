@@ -753,7 +753,7 @@ class BasicFlags(metaclass=MetaFlags):
 
                 result[flag_name] = converted_value
             else:
-                raise TypeError(f"Couldn't convert flag `{flag_name}` to correct data type.")
+                raise TypeError(f"Unknown flag `{flag_name}` or incorrect data type inserted.")
 
         for flag_name, default_value in flags.items():
             if flag_name not in result:

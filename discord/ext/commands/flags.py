@@ -743,19 +743,15 @@ class BasicFlags(metaclass=MetaFlags):
                     result[flag_name] = True
                 else:
                     if expected_type.__class__ is type(Optional):
-                        result[flag_name] = None
+                        if expected_type.__args__[0] is int:
+                            result[flag_name] = None
+                        else:
+                            result[flag_name] = True
                     else:
                         result[flag_name] = True
             else:
                 for expected_type in expected_types:
-                    try:
-                        if expected_type is bool:
-                            result[flag_name] = flag_value.lower() == 'true'
-                        else:
-                            result[flag_name] = expected_type(flag_value)
-                        break
-                    except (ValueError, TypeError):
-                        continue
+                    result[flag_name] = expected_type(flag_value)
                 else:
                     raise TypeError(f"Cannot convert flag `{flag_name}` to any type in {expected_type}")
 

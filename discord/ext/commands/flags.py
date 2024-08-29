@@ -765,7 +765,7 @@ class BasicFlags(metaclass=MetaFlags):
                 else cls.__annotations__[flag]
             )
 
-            if not isinstance(_type, bool):
+            if not (_type is bool):
                 continue
 
             if f"--{flag}" not in argument:

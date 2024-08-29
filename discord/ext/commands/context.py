@@ -21,13 +21,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
+
 from __future__ import annotations
 
 import re
 from typing import TYPE_CHECKING, Any, Dict, Generator, Generic, List, Optional, TypeVar, Union, Sequence, Type, overload
 
 import discord.abc
-from discord.ext.commands.flags import FlagConverter
+from discord.ext.commands.flags import BasicFlags
 import discord.utils
 from discord import Interaction, Message, Attachment, MessageType, User, PartialMessageable, Permissions, ChannelType, Thread
 from discord.context_managers import Typing
@@ -197,7 +198,7 @@ class Context(discord.abc.Messageable, Generic[BotT]):
         self.message: Message = message
         self.bot: BotT = bot
         self.args: List[Any] = args or []
-        self.flag: Optional[FlagConverter] = None
+        self.flag: Any = None
         self.kwargs: Dict[str, Any] = kwargs or {}
         self.prefix: Optional[str] = prefix
         self.command: Optional[Command[Any, ..., Any]] = command
@@ -645,8 +646,7 @@ class Context(discord.abc.Messageable, Generic[BotT]):
         ephemeral: bool = ...,
         silent: bool = ...,
         poll: Poll = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def reply(
@@ -667,8 +667,7 @@ class Context(discord.abc.Messageable, Generic[BotT]):
         ephemeral: bool = ...,
         silent: bool = ...,
         poll: Poll = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def reply(
@@ -689,8 +688,7 @@ class Context(discord.abc.Messageable, Generic[BotT]):
         ephemeral: bool = ...,
         silent: bool = ...,
         poll: Poll = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def reply(
@@ -711,8 +709,7 @@ class Context(discord.abc.Messageable, Generic[BotT]):
         ephemeral: bool = ...,
         silent: bool = ...,
         poll: Poll = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     async def reply(self, content: Optional[str] = None, **kwargs: Any) -> Message:
         """|coro|
@@ -834,8 +831,7 @@ class Context(discord.abc.Messageable, Generic[BotT]):
         ephemeral: bool = ...,
         silent: bool = ...,
         poll: Poll = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def send(
@@ -856,8 +852,7 @@ class Context(discord.abc.Messageable, Generic[BotT]):
         ephemeral: bool = ...,
         silent: bool = ...,
         poll: Poll = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def send(
@@ -878,8 +873,7 @@ class Context(discord.abc.Messageable, Generic[BotT]):
         ephemeral: bool = ...,
         silent: bool = ...,
         poll: Poll = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def send(
@@ -900,8 +894,7 @@ class Context(discord.abc.Messageable, Generic[BotT]):
         ephemeral: bool = ...,
         silent: bool = ...,
         poll: Poll = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     async def send(
         self,

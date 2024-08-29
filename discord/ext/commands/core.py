@@ -51,11 +51,11 @@ from typing import (
 import re
 
 import discord
-from discord.ext.commands.flags import FlagConverter
 
 from ._types import _BaseCommand, CogT
 from .cog import Cog
 from .context import Context
+from .flags import BasicFlags
 from .converter import Greedy, run_converters
 from .cooldowns import BucketType, Cooldown, CooldownMapping, DynamicCooldownMapping, MaxConcurrency
 from .errors import *
@@ -433,7 +433,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         self.extras: Dict[Any, Any] = kwargs.get('extras', {})
         self.example: Optional[str] = kwargs.get('example')
 
-        self._flag: Optional[FlagConverter] = kwargs.get('flag')
+        self._flag: Optional[BasicFlags] = kwargs.get('flag')
 
         self.user_permissions: List[str] = []
         self.bot_permissions: List[str] = []

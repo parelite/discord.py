@@ -324,7 +324,7 @@ class BotBase(GroupMixin[None]):
             return result
 
         return decorator
-    
+
     async def load_cogs_from_dir(self, path: str):
         """Recursively Load all cogs from directories and subdirectories."""
         for file in glob.glob(f'{path}/**/*.py', recursive=True):
@@ -1346,7 +1346,7 @@ class BotBase(GroupMixin[None]):
 
         if self.strip_after_prefix:
             view.skip_ws()
-        
+
         invoker = view.get_word()
         ctx.invoked_with = invoker
         # type-checker fails to narrow invoked_prefix type.
@@ -1355,17 +1355,14 @@ class BotBase(GroupMixin[None]):
         return ctx
 
     async def handle_command_flags(self, ctx: Context[BotT]):
-        """ Handle command flags, replace message content to remove any present flags.
+        """Handle command flags and remove them from message content."""
+        if ctx.command and ctx.command._flag:
+            flag_instance = await ctx.command._flag.convert(ctx, ctx.message.content)
 
-        Args:
-            ctx: :class:`.Context`
-                The invocation context to handle flags for.
-        """
-        if ctx.command is not None and ctx.command._flag is not None:
-            ctx.flag = await ctx.command._flag.convert(ctx, ctx.message.content)
-            for name, value in ctx.flag:
-                ctx.message.content = ctx.message.content.strip().replace(f'--{name} {value}', '').replace(f'--{name}', '')
-            
+            flags = {f'--{name} {value}' if value else f'--{name}' for name, value in flag_instance}
+            ctx.message.content = ' '.join(part for part in ctx.message.content.split() if part not in flags)
+            ctx.flag = flag_instance
+
     async def invoke(self, ctx: Context[BotT], /) -> None:
         """|coro|
 
@@ -1383,9 +1380,13 @@ class BotBase(GroupMixin[None]):
         """
         if ctx.command is not None:
             self.dispatch('command', ctx)
-            await self.handle_command_flags(ctx)
             try:
                 if await self.can_run(ctx, call_once=True):
+                    try:
+                        await self.handle_command_flags(ctx)
+                    except Exception as exc:
+                        self.dispatch('command_error', ctx, exc)
+                        return
                     await ctx.command.invoke(ctx)
                 else:
                     raise errors.CheckFailure('The global check once functions failed.')

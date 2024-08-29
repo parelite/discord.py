@@ -758,6 +758,21 @@ class BasicFlags(metaclass=MetaFlags):
             except:
                 raise TypeError(f"You inputted an invalid type for the **flag** `{flag_name}`.")
 
+        for flag in [unbound for unbound in flags.keys() if unbound not in result]:
+            _type = (
+                get_args(cls.__annotations__[flag])[0]
+                if get_origin(cls.__annotations__[flag]) is Union
+                else cls.__annotations__[flag]
+            )
+
+            if not isinstance(_type, bool):
+                continue
+
+            if f"--{flag}" not in argument:
+                continue
+
+            result[flag] = True
+
         for flag_name, default_value in flags.items():
             if flag_name not in result:
                 result[flag_name] = default_value

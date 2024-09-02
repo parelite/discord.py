@@ -335,14 +335,6 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
     def predicate(interaction: Interaction) -> bool:
         permissions = interaction.permissions
 
-        # Will cause exception if interaction.client is not commands.AutoShardedBot or commands.Bot - Works on the assumption that the user uses either of them.
-        assert isinstance(
-            interaction.client, (AutoShardedBot, Bot)
-        ), "interaction.client must be an instance of commands.AutoShardedBot or commands.Bot"
-
-        if interaction.client.owner_ids is not None and interaction.user.id in interaction.client.owner_ids:
-            return True
-
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
         if not missing:

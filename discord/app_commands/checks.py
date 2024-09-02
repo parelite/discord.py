@@ -58,7 +58,6 @@ T = TypeVar('T')
 if TYPE_CHECKING:
     from typing_extensions import Self
     from ..interactions import Interaction
-    from ..ext.commands import AutoShardedBot, Bot, Command
 
     CooldownFunction = Union[
         Callable[[Interaction[Any]], Coroutine[Any, Any, T]],

@@ -335,12 +335,6 @@ def has_permissions(**perms: bool) -> Callable[[T], T]:
     def predicate(interaction: Interaction) -> bool:
         permissions = interaction.permissions
 
-        if isinstance(interaction.command, Command):
-            interaction.command.user_permissions.extend(
-                [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
-            )
-
-
         # Will cause exception if interaction.client is not commands.AutoShardedBot or commands.Bot - Works on the assumption that the user uses either of them.
         assert isinstance(
             interaction.client, (AutoShardedBot, Bot)
@@ -376,11 +370,6 @@ def bot_has_permissions(**perms: bool) -> Callable[[T], T]:
     def predicate(interaction: Interaction) -> bool:
         permissions = interaction.app_permissions
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
-
-        if isinstance(interaction.command, Command):
-            interaction.command.bot_permissions.append(
-                *[perm for perm, value in perms.items() if getattr(permissions, perm) != value]
-            )
 
         if not missing:
             return True

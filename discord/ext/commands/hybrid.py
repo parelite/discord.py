@@ -623,7 +623,7 @@ class HybridGroup(Group[CogT, P, T]):
         if description is not MISSING:
             attrs['description'] = description
         super().__init__(*args, **attrs)
-        self.invoke_without_command = True
+        self.invoke_without_command: bool = attrs.pop('invoke_without_command', False)
         self.with_app_command: bool = attrs.pop('with_app_command', True)
         self._locale_name: Optional[app_commands.locale_str] = name_locale
         self._locale_description: Optional[app_commands.locale_str] = description_locale

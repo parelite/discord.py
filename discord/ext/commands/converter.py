@@ -882,7 +882,8 @@ class RolesConverter(IDConverter[List[discord.Role]]):
             raise RoleNotFound(argument)
 
         return results
-      
+
+
 class TimeDeltaConverter(Converter[datetime.timedelta]):
     """Converts to a :class:`~datetime.timedelta`.
 
@@ -1521,6 +1522,7 @@ CONVERTER_MAPPING: Dict[type, Any] = {
     discord.GuildSticker: GuildStickerConverter,
     discord.ScheduledEvent: ScheduledEventConverter,
     discord.ForumChannel: ForumChannelConverter,
+    datetime.timedelta: TimeDeltaConverter,
     List[discord.Role]: RolesConverter,
 }
 

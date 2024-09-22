@@ -1675,6 +1675,15 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
             ret.add_command(cmd.copy())
         return ret
 
+    async def handle_command_flags(self, ctx: Context[BotT]):
+        """Handle command flags and remove them from message content."""
+        if ctx.command and ctx.command._flag:
+            flag_instance = await ctx.command._flag.convert(ctx, ctx.message.content)
+
+            flags = {f'--{name} {value}' if value else f'--{name}' for name, value in flag_instance}
+            ctx.message.content = ' '.join(part for part in ctx.message.content.split() if part not in flags)
+            ctx.flag = flag_instance
+
     async def invoke(self, ctx: Context[BotT], /) -> None:
         ctx.invoked_subcommand = None
         ctx.subcommand_passed = None
@@ -1699,6 +1708,7 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
 
         if trigger and ctx.invoked_subcommand:
             ctx.invoked_with = trigger
+            await self.handle_command_flags(ctx)
             await ctx.invoked_subcommand.invoke(ctx)
         elif not early_invoke:
             # undo the trigger parsing

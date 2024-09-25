@@ -1634,6 +1634,7 @@ async def run_converters(ctx: Context[BotT], converter: Any, argument: str, para
         errors = []
         conversions = {}
         literal_args = converter.__args__
+
         for literal in literal_args:
             literal_type = type(literal)
             try:
@@ -1648,7 +1649,10 @@ async def run_converters(ctx: Context[BotT], converter: Any, argument: str, para
                 else:
                     conversions[literal_type] = value
 
-            if value == literal:
+            if isinstance(value, str) and isinstance(literal, str):
+                if value.lower() == literal.lower():
+                    return literal
+            elif value == literal:
                 return value
 
         raise BadLiteralArgument(param, literal_args, errors, argument)

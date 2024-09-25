@@ -329,7 +329,7 @@ class BotBase(GroupMixin[None]):
         """Recursively Load all cogs from directories and subdirectories."""
         for file in glob.glob(f'{path}/**/*.py', recursive=True):
             try:
-                await self.load_extension(file.replace('/', '.').replace('\\', '.')[:-3])
+                await self.load_extension(file.replace('/', '.').replace('\\', '.').replace('.__init__', '')[:-3])
             except errors.ExtensionFailed as exception:
                 logging.warning(f'Failed to load extension {file}: {exception}')
             except:

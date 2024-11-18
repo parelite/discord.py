@@ -707,6 +707,10 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         view = ctx.view
         view.skip_ws()
 
+        if ctx.flag and view.buffer:
+            for name, value in ctx.flag:
+                view.buffer = re.sub(rf'--{name}(?: {value})?', '', view.buffer).strip()
+
         # The greedy converter is simple -- it keeps going until it fails in which case,
         # it undos the view ready for the next parameter to use instead
         if isinstance(converter, Greedy):
@@ -749,13 +753,6 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
                 raise MissingRequiredArgument(param)
             return await param.get_default(ctx)
 
-        if ctx.flag and view.buffer:
-            for name, value in ctx.flag:
-                view.buffer = re.sub(rf'--{name}(?: {value})?', '', view.buffer).strip()
-            
-            ctx.view = StringView(view.buffer)
-            view = ctx.view
-                
         previous = view.index
         if consume_rest_is_special:
             ctx.current_argument = argument = view.read_rest().strip()
@@ -769,7 +766,6 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
                 else:
                     raise exc
         view.previous = previous
-
 
         # type-checker fails to narrow argument
         return await run_converters(ctx, converter, argument, param)  # type: ignore

@@ -750,7 +750,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
         if ctx.flag and view.buffer:
             for name, value in ctx.flag:
-                view.buffer = re.sub(rf'--{name}(?: {value})?', '', view.buffer)
+                view.buffer = re.sub(rf'--{name}(?: {value})?', '', view.buffer).strip()
                 view.end = len(view.buffer)
                 
         previous = view.index

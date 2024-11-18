@@ -51,6 +51,7 @@ from typing import (
 import re
 
 import discord
+from discord.ext.commands.view import StringView
 
 from ._types import _BaseCommand, CogT
 from .cog import Cog
@@ -751,7 +752,9 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         if ctx.flag and view.buffer:
             for name, value in ctx.flag:
                 view.buffer = re.sub(rf'--{name}(?: {value})?', '', view.buffer).strip()
-                view.end = len(view.buffer)
+            
+            ctx.view = StringView(view.buffer)
+            view = ctx.view
                 
         previous = view.index
         if consume_rest_is_special:

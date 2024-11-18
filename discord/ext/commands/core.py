@@ -748,6 +748,10 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
                 raise MissingRequiredArgument(param)
             return await param.get_default(ctx)
 
+        if ctx.flag and view.buffer:
+            for name, value in ctx.flag:
+                view.buffer = re.sub(rf'--{name}(?: {value})?', '', view.buffer)
+                
         previous = view.index
         if consume_rest_is_special:
             ctx.current_argument = argument = view.read_rest().strip()
@@ -762,10 +766,6 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
                     raise exc
         view.previous = previous
 
-        if ctx.flag is not None and argument is not None:
-            for name, value in ctx.flag:
-                argument = argument.strip().replace(f'--{name} {value}', '').replace(f'--{name}', '')
-            argument = argument or None
 
         # type-checker fails to narrow argument
         return await run_converters(ctx, converter, argument, param)  # type: ignore
